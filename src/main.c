@@ -8,7 +8,7 @@ typedef unsigned char  __data             UINT8D;
 #include <stdio.h>
 #include <string.h>
 #include "CH559.h"
-#include "util.h"
+#include "bsp.h"
 #include "USBHost.h"
 #include "uart.h"
 
@@ -18,7 +18,7 @@ void main()
 {
     unsigned char s;
     initClock();
-    initUART0(1000000, 1);
+    initUART0(115200, 1);
     DEBUG_OUT("Startup\n");
     resetHubDevices(0);
     resetHubDevices(1);
