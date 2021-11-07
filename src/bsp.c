@@ -193,10 +193,12 @@ unsigned char digitalRead(unsigned char port, unsigned char pin)
 
 int putchar(int c)
 {
-    while (!TI);
-    TI = 0;
-    SBUF = c & 0xFF;
-    return c;
+    // while (!TI);
+    // TI = 0;
+    // SBUF = c & 0xFF;
+    while((SER1_LSR & bLSR_T_FIFO_EMP) == 0);
+	SER1_THR = c;
+	return c;
 }
 
 int getchar() 
@@ -253,73 +255,48 @@ void UART0Send(unsigned char b)
 	TI = 1;
 }
 
-/*******************************************************************************
-* Function Name  : CH559UART1Init(UINT8 DIV,UINT8 mode,UINT8 pin)
-* Description    : CH559 UART1初始化设置
-* Input          : 
-                   UINT8 DIV设置分频系数，时钟频率=Fsys/DIV,DIV不能为0
-                   UINT8 mode，模式选择，1：普通串口模式；0:485模式
-                   UINT8 pin，串口引脚选择；
-                   当mode=1时
-                   0：RXD1=P4.0,TXD1关闭；
-                   1：RXD1&TXD1=P4.0&P4.4；
-                   2：RXD1&TXD1=P2.6&P2.7；
-                   3：RXD1&TXD1&TNOW=P2.6&P2.7&P2.5；
-                   当mode=0时
-                   0：无意义
-                   1：P5.4&P5.5连接485,TNOW=P4.4；
-                   2：P5.4&P5.5连接485；
-                   3：P5.4&P5.5连接485,TNOW=P2.5；
-* Output         : None
-* Return         : None
-*******************************************************************************/
-void CH559UART1Init(UINT8 DIV,UINT8 mode,UINT8 pin)
+/**
+ * Initialize UART0 port with given boud rate
+ * pins: tx = P4.4 rx = P4.0
+ * alt != 0 pins: tx = P2.7 rx = P2.6
+ */
+
+void initUART1(unsigned long baud, int alt)
 {
-    UINT32 x;
-    UINT8 x2; 
+    unsigned long x = FREQ_SYS / 16 / baud;
 
-    SER1_LCR |= bLCR_DLAB;                                                    // DLAB位置1，写DLL、DLM和DIV寄存器
-    SER1_DIV = DIV;                                                           // 预分频
-    x = 10 * FREQ_SYS *2 / DIV / 16 / CH559UART1_BPS;                             
-    x2 = x % 10;
-    x /= 10;
-    if ( x2 >= 5 ) x ++;                                                      //四舍五入
+    SER1_LCR |= bLCR_DLAB;                          // DLAB位置1，写DLL、DLM和DIV寄存器
+    SER1_DIV = 2;                      				// 预分频
     SER1_DLM = x>>8;
-    SER1_DLL = x&0xff;
-    SER1_LCR &= ~bLCR_DLAB;                                                   //DLAB位置0,防止修改UART1波特率和时钟
-    if(mode == 1)                                                             //关闭RS485模式 RS485_EN = 0,不能省略
-    {
-	      XBUS_AUX |=  bALE_CLK_EN;                                     
-    }
-    else if(mode == 0)                                                        //开启RS485模式 RS485_EN = 1;
-    {
-        UHUB1_CTRL |= bUH1_DISABLE;                                   
-        PIN_FUNC &= ~bXBUS_CS_OE;
-        PIN_FUNC |= bXBUS_AL_OE;
-        XBUS_AUX &= ~bALE_CLK_EN;	
-        SER1_MCR |= bMCR_HALF;                                                //485模式只能使用半双工模式	    
-    }
-    SER1_LCR |= MASK_U1_WORD_SZ;                                              //线路控制
-    SER1_LCR &= ~(bLCR_PAR_EN | bLCR_STOP_BIT);                               //无线路间隔，无校验，1位停止位，8位数据位
+    SER1_DLL = x&0xFF;
 
-    SER1_IER |= ((pin << 4) & MASK_U1_PIN_MOD);                               //串口模式配置
-    SER1_IER |= bIER_MODEM_CHG | bIER_LINE_STAT | bIER_THR_EMPTY | bIER_RECV_RDY;//中断使能配置
+	XBUS_AUX |=  bALE_CLK_EN;
+    SER1_LCR &= ~bLCR_DLAB;                         //DLAB位置0,防止修改UART1波特率和时钟
+    SER1_LCR |= MASK_U1_WORD_SZ;                    //线路控制
+    SER1_LCR &= ~(bLCR_PAR_EN | bLCR_STOP_BIT);     //无线路间隔，无校验，1位停止位，8位数据位
+
+	if(alt)
+    	SER1_IER |= ((2 << 4) & MASK_U1_PIN_MOD);   //串口模式配置
+    else
+		SER1_IER |= ((1 << 4) & MASK_U1_PIN_MOD);   //串口模式配置	
+
+    SER1_IER |= bIER_MODEM_CHG | bIER_LINE_STAT | bIER_THR_EMPTY | bIER_RECV_RDY;	//中断使能配置
  
     SER1_FCR |= MASK_U1_FIFO_TRIG | bFCR_T_FIFO_CLR | bFCR_R_FIFO_CLR | bFCR_FIFO_EN;//FIFO控制器
                                                                                //清空接收、发送FIFO，7字节接收触发，FIFO使能
-    SER1_MCR |= bMCR_OUT2;                                                     //MODEM控制寄存器
-                                                                               //中断请求输出，不产生实际中断
-    SER1_ADDR |= 0xff;                                                         //关闭多机通信
+    SER1_MCR |= bMCR_OUT2;                          //MODEM控制寄存器
+                                                    //中断请求输出，不产生实际中断
+    SER1_ADDR |= 0xFF;                              //关闭多机通信
 }
 
 unsigned char UART1Receive()
 {
-    while((SER1_LSR & bLSR_DATA_RDY) == 0);                                   //等待数据准备好
+    while((SER1_LSR & bLSR_DATA_RDY) == 0);
     return SER1_RBR;
 }
 
 void UART1Send(unsigned char b)
 {
 	SER1_THR = b;
-    while((SER1_LSR & bLSR_T_FIFO_EMP) == 0); 
+    while((SER1_LSR & bLSR_T_FIFO_EMP) == 0);
 }

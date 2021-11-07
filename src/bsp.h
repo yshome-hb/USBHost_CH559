@@ -2,10 +2,14 @@
 #define __BSP_H__
 #include <stdio.h>
 
-#if 1
-#define DEBUG_OUT(...) printf(__VA_ARGS__);
+#define DEBUG
+
+#ifdef DEBUG
+#define debug_printf_init(baud)    initUART1(baud, 1)
+#define YS_LOG(...) printf(__VA_ARGS__);
 #else
-#define DEBUG_OUT(...) (void)0;
+#define debug_printf_init(baud)
+#define YS_LOG(...) (void)0;
 #endif
 
 typedef enum
@@ -26,6 +30,9 @@ void delay(unsigned short n);
 void initUART0(unsigned long baud, int alt);
 unsigned char UART0Receive();
 void UART0Send(unsigned char b);
+void initUART1(unsigned long baud, int alt);
+unsigned char UART1Receive();
+void UART1Send(unsigned char b);
 
 typedef void(* __data FunctionReference)();
 extern FunctionReference runBootloader;

@@ -257,7 +257,7 @@ unsigned char hostCtrlTransfer(unsigned char __xdata *DataBuf, unsigned short *R
 	unsigned char s, RxLen, i;
 	unsigned char __xdata *pBuf;
 	unsigned short *pLen;
-	DEBUG_OUT("hostCtrlTransfer\n");
+	YS_LOG("hostCtrlTransfer\n");
 	PXUSB_SETUP_REQ pSetupReq = ((PXUSB_SETUP_REQ)TxBuffer);
 	pBuf = DataBuf;
 	pLen = RetLen;
@@ -275,7 +275,7 @@ unsigned char hostCtrlTransfer(unsigned char __xdata *DataBuf, unsigned short *R
 	{ 
 		if (pSetupReq->bRequestType & USB_REQ_TYP_IN)
 		{
-			DEBUG_OUT("Remaining bytes to read %d\n", RemLen);
+			YS_LOG("Remaining bytes to read %d\n", RemLen);
 			while (RemLen)
 			{
 				delayUs(300);
@@ -289,7 +289,7 @@ unsigned char hostCtrlTransfer(unsigned char __xdata *DataBuf, unsigned short *R
 				for(i = 0; i < RxLen; i++)
 					pBuf[i] = RxBuffer[i];
 				pBuf += RxLen;
-				DEBUG_OUT("Received %i bytes\n", (uint16_t)USB_RX_LEN);
+				YS_LOG("Received %i bytes\n", (uint16_t)USB_RX_LEN);
 				if (USB_RX_LEN == 0 || (USB_RX_LEN < endpoint0Size ))
 					break; 
 			}
@@ -297,7 +297,7 @@ unsigned char hostCtrlTransfer(unsigned char __xdata *DataBuf, unsigned short *R
 		}
 		else
 		{
-			DEBUG_OUT("Remaining bytes to write %i", RemLen);
+			YS_LOG("Remaining bytes to write %i", RemLen);
 			//todo rework this TxBuffer overwritten
 			while (RemLen)
 			{
@@ -310,9 +310,9 @@ unsigned char hostCtrlTransfer(unsigned char __xdata *DataBuf, unsigned short *R
 					SetPort = SetPort ^ 1 ? 1 : 0;
 					*pBuf = SetPort;
 
-					DEBUG_OUT("SET_PORT  %02X  %02X ", *pBuf, SetPort);
+					YS_LOG("SET_PORT  %02X  %02X ", *pBuf, SetPort);
 				}
-				DEBUG_OUT("Sending %i bytes\n", (uint16_t)UH_TX_LEN);
+				YS_LOG("Sending %i bytes\n", (uint16_t)UH_TX_LEN);
 				s = hostTransfer(USB_PID_OUT << 4, UH_TX_CTRL, 10000);
 				if (s != ERR_SUCCESS)
 					return (s);
@@ -336,10 +336,10 @@ unsigned char hostCtrlTransfer(unsigned char __xdata *DataBuf, unsigned short *R
 void fillTxBuffer(PUINT8C data, unsigned char len)
 {
 	unsigned char i;
-	DEBUG_OUT("fillTxBuffer %i bytes\n", len);
+	YS_LOG("fillTxBuffer %i bytes\n", len);
 	for(i = 0; i < len; i++)
 		TxBuffer[i] = data[i];
-	DEBUG_OUT("fillTxBuffer done\n", len);
+	YS_LOG("fillTxBuffer done\n", len);
 }
 
 unsigned char getDeviceDescriptor()
@@ -347,17 +347,17 @@ unsigned char getDeviceDescriptor()
     unsigned char s;
     unsigned short len;
     endpoint0Size = DEFAULT_ENDP0_SIZE;		//TODO again?
-	DEBUG_OUT("getDeviceDescriptor\n");
+	YS_LOG("getDeviceDescriptor\n");
 	fillTxBuffer(GetDeviceDescriptorRequest, sizeof(GetDeviceDescriptorRequest));
     s = hostCtrlTransfer(receiveDataBuffer, &len, RECEIVE_BUFFER_LEN);          
     if (s != ERR_SUCCESS)
         return s;
 
-	DEBUG_OUT("Device descriptor request sent successfully\n");
+	YS_LOG("Device descriptor request sent successfully\n");
     endpoint0Size = ((PXUSB_DEV_DESCR)receiveDataBuffer)->bMaxPacketSize0;
     if (len < ((PUSB_SETUP_REQ)GetDeviceDescriptorRequest)->wLengthL)
     {
-		DEBUG_OUT("Received packet is smaller than expected\n")
+		YS_LOG("Received packet is smaller than expected\n")
         return ERR_USB_BUF_OVER;                
     }
     return ERR_SUCCESS;
@@ -371,7 +371,7 @@ unsigned char setUsbAddress(unsigned char addr)
     pSetupReq->wValueL = addr;          
     s = hostCtrlTransfer(0, 0, 0);   
     if (s != ERR_SUCCESS) return s;
-    DEBUG_OUT( "SetAddress: %i\n" , addr);
+    YS_LOG( "SetAddress: %i\n" , addr);
     setHostUsbAddr(addr);
     delay(100);         
     return ERR_SUCCESS;
@@ -406,14 +406,14 @@ char convertStringDescriptor(unsigned char __xdata *usbBuffer, unsigned char __x
 	return 1;
 }
 
-void DEBUG_OUT_USB_BUFFER(unsigned char __xdata *usbBuffer)
+void YS_LOG_USB_BUFFER(unsigned char __xdata *usbBuffer)
 {
 	int i;
 	for(i = 0; i < usbBuffer[0]; i++)
 	{
-		DEBUG_OUT("0x%02X ", (uint16_t)(usbBuffer[i]));
+		YS_LOG("0x%02X ", (uint16_t)(usbBuffer[i]));
 	}
-	DEBUG_OUT("\n");
+	YS_LOG("\n");
 }
 
 unsigned char getConfigurationDescriptor()
@@ -551,7 +551,7 @@ void pollHIDdevice()
 			if ( len )
 			{		
 				LED = !LED;	
-				//DEBUG_OUT("HID %lu, %i data %i : ", HIDdevice[hiddevice].type, hiddevice, HIDdevice[hiddevice].endPoint & 0x7F);
+				//YS_LOG("HID %lu, %i data %i : ", HIDdevice[hiddevice].type, hiddevice, HIDdevice[hiddevice].endPoint & 0x7F);
 				sendHidPollMSG(MSG_TYPE_DEVICE_POLL,len, HIDdevice[hiddevice].type, hiddevice, HIDdevice[hiddevice].endPoint & 0x7F, RxBuffer,VendorProductID[HIDdevice[hiddevice].rootHub].idVendorL,VendorProductID[HIDdevice[hiddevice].rootHub].idVendorH,VendorProductID[HIDdevice[hiddevice].rootHub].idProductL,VendorProductID[HIDdevice[hiddevice].rootHub].idProductH);
 			}
 		}
@@ -575,34 +575,34 @@ void parseHIDDeviceReport(unsigned char __xdata *report, unsigned short length, 
 		for(j = 0; j < size; j++)
 			data |= ((unsigned long)report[i + 1 + j]) << (j * 8);
 		for(j = 0; j < level - (id == REPORT_COLLECTION_END ? 1 : 0); j++)
-			DEBUG_OUT("    ");
+			YS_LOG("    ");
 		switch(id)
 		{
 			case REPORT_USAGE_PAGE:	//todo clean up defines (case)
 			{
 				unsigned long vd = data < REPORT_USAGE_PAGE_VENDOR ? data : REPORT_USAGE_PAGE_VENDOR;
-				DEBUG_OUT("Usage page ");
+				YS_LOG("Usage page ");
 				switch(vd)
 				{
 					case REPORT_USAGE_PAGE_LEDS:
-						DEBUG_OUT("LEDs");
+						YS_LOG("LEDs");
 					break;
 					case REPORT_USAGE_PAGE_KEYBOARD:
-						DEBUG_OUT("Keyboard/Keypad");
+						YS_LOG("Keyboard/Keypad");
 					break;
 					case REPORT_USAGE_PAGE_BUTTON:
-						DEBUG_OUT("Button");
+						YS_LOG("Button");
 					break;
 					case REPORT_USAGE_PAGE_GENERIC:
-						DEBUG_OUT("generic desktop controls");
+						YS_LOG("generic desktop controls");
 					break;
 					case REPORT_USAGE_PAGE_VENDOR:
-						DEBUG_OUT("vendor defined 0x%04lx", data);
+						YS_LOG("vendor defined 0x%04lx", data);
 					break;
 					default:
-						DEBUG_OUT("unknown 0x%02lx", data);
+						YS_LOG("unknown 0x%02lx", data);
 				}
-				DEBUG_OUT("\n");
+				YS_LOG("\n");
 			}
 			break;
 			case REPORT_USAGE:
@@ -610,106 +610,106 @@ void parseHIDDeviceReport(unsigned char __xdata *report, unsigned short length, 
 					HIDdevice[CurrentDevive].type = data;
 					isUsageSet = 1;
 				}
-				DEBUG_OUT("Usage ");
+				YS_LOG("Usage ");
 				switch(data)
 				{
 					case REPORT_USAGE_UNKNOWN:
-						DEBUG_OUT("Unknown");
+						YS_LOG("Unknown");
 					break;
 					case REPORT_USAGE_POINTER:
-						DEBUG_OUT("Pointer");
+						YS_LOG("Pointer");
 					break;
 					case REPORT_USAGE_MOUSE:
-						DEBUG_OUT("Mouse");
+						YS_LOG("Mouse");
 					break;
 					case REPORT_USAGE_RESERVED:
-						DEBUG_OUT("Reserved");
+						YS_LOG("Reserved");
 					break;
 					case REPORT_USAGE_JOYSTICK:
-						DEBUG_OUT("Joystick");
+						YS_LOG("Joystick");
 					break;
 					case REPORT_USAGE_GAMEPAD:
-						DEBUG_OUT("Gamepad");
+						YS_LOG("Gamepad");
 					break;
 					case REPORT_USAGE_KEYBOARD:
-						DEBUG_OUT("Keyboard");
+						YS_LOG("Keyboard");
 					break;
 					case REPORT_USAGE_KEYPAD:
-						DEBUG_OUT("Keypad");
+						YS_LOG("Keypad");
 					break;
 					case REPORT_USAGE_MULTI_AXIS:
-						DEBUG_OUT("Multi-Axis controller");
+						YS_LOG("Multi-Axis controller");
 					break;
 					case REPORT_USAGE_SYSTEM:
-						DEBUG_OUT("Tablet system controls");
+						YS_LOG("Tablet system controls");
 					break;
 
 					case REPORT_USAGE_X:
-						DEBUG_OUT("X");
+						YS_LOG("X");
 					break;
 					case REPORT_USAGE_Y:
-						DEBUG_OUT("Y");
+						YS_LOG("Y");
 					break;
 					case REPORT_USAGE_Z:
-						DEBUG_OUT("Z");
+						YS_LOG("Z");
 					break;
 					case REPORT_USAGE_WHEEL:
-						DEBUG_OUT("Wheel");
+						YS_LOG("Wheel");
 					break;
 					default:
-						DEBUG_OUT("unknown 0x%02lx", data);
+						YS_LOG("unknown 0x%02lx", data);
 				}
-				DEBUG_OUT("\n");
+				YS_LOG("\n");
 			break;
 			case REPORT_LOCAL_MINIMUM:
-				DEBUG_OUT("Logical min %lu\n", data);
+				YS_LOG("Logical min %lu\n", data);
 			break;
 			case REPORT_LOCAL_MAXIMUM:
-				DEBUG_OUT("Logical max %lu\n", data);
+				YS_LOG("Logical max %lu\n", data);
 			break;
 			case REPORT_PHYSICAL_MINIMUM:
-				DEBUG_OUT("Physical min %lu\n", data);
+				YS_LOG("Physical min %lu\n", data);
 			break;
 			case REPORT_PHYSICAL_MAXIMUM:
-				DEBUG_OUT("Physical max %lu\n", data);
+				YS_LOG("Physical max %lu\n", data);
 			break;
 			case REPORT_USAGE_MINIMUM:
-				DEBUG_OUT("Physical min %lu\n", data);
+				YS_LOG("Physical min %lu\n", data);
 			break;
 			case REPORT_USAGE_MAXIMUM:
-				DEBUG_OUT("Physical max %lu\n", data);
+				YS_LOG("Physical max %lu\n", data);
 			break;
 			case REPORT_COLLECTION:
-				DEBUG_OUT("Collection start %lu\n", data);
+				YS_LOG("Collection start %lu\n", data);
 				level++;
 			break;
 			case REPORT_COLLECTION_END:
-				DEBUG_OUT("Collection end %lu\n", data);
+				YS_LOG("Collection end %lu\n", data);
 				level--;
 			break;
 			case REPORT_UNIT:
-				DEBUG_OUT("Unit 0x%02lx\n", data);
+				YS_LOG("Unit 0x%02lx\n", data);
 			break;
 			case REPORT_INPUT:
-				DEBUG_OUT("Input 0x%02lx\n", data);
+				YS_LOG("Input 0x%02lx\n", data);
 			break;
 			case REPORT_OUTPUT:
-				DEBUG_OUT("Output 0x%02lx\n", data);
+				YS_LOG("Output 0x%02lx\n", data);
 			break;
 			case REPORT_FEATURE:
-				DEBUG_OUT("Feature 0x%02lx\n", data);
+				YS_LOG("Feature 0x%02lx\n", data);
 			break;
 			case REPORT_REPORT_SIZE:
-				DEBUG_OUT("Report size %lu\n", data);
+				YS_LOG("Report size %lu\n", data);
 			break;
 			case REPORT_REPORT_ID:
-				DEBUG_OUT("Report ID %lu\n", data);
+				YS_LOG("Report ID %lu\n", data);
 			break;
 			case REPORT_REPORT_COUNT:
-				DEBUG_OUT("Report count %lu\n", data);
+				YS_LOG("Report count %lu\n", data);
 			break;
 			default:
-				DEBUG_OUT("Unknown HID report identifier: 0x%02x (%i bytes) data: 0x%02lx\n", id, size, data);
+				YS_LOG("Unknown HID report identifier: 0x%02x (%i bytes) data: 0x%02lx\n", id, size, data);
 		};
 		i += size + 1;
 	}
@@ -719,7 +719,7 @@ unsigned char getHIDDeviceReport(unsigned char CurrentDevive)
 {
  	unsigned char s;
 	unsigned short len, i, reportLen = RECEIVE_BUFFER_LEN;
-	DEBUG_OUT("Requesting report from interface %i\n", HIDdevice[CurrentDevive].interface);
+	YS_LOG("Requesting report from interface %i\n", HIDdevice[CurrentDevive].interface);
 
 	fillTxBuffer(SetHIDIdleRequest, sizeof(SetHIDIdleRequest));
 	((PXUSB_SETUP_REQ)TxBuffer)->wIndexL = HIDdevice[CurrentDevive].interface;	
@@ -739,9 +739,9 @@ unsigned char getHIDDeviceReport(unsigned char CurrentDevive)
 	
 	for (i = 0; i < len; i++)
 	{
-		DEBUG_OUT("0x%02X ", receiveDataBuffer[i]);
+		YS_LOG("0x%02X ", receiveDataBuffer[i]);
 	}
-	DEBUG_OUT("\n");
+	YS_LOG("\n");
 	sendProtocolMSG(MSG_TYPE_HID_INFO, len, CurrentDevive, HIDdevice[CurrentDevive].interface, HIDdevice[CurrentDevive].rootHub, receiveDataBuffer);
 	parseHIDDeviceReport(receiveDataBuffer, len, CurrentDevive);
 	return (ERR_SUCCESS);
@@ -750,18 +750,18 @@ unsigned char getHIDDeviceReport(unsigned char CurrentDevive)
 void readInterface(unsigned char rootHubIndex, PXUSB_ITF_DESCR interface)
 {
 	unsigned char temp = rootHubIndex;
-	DEBUG_OUT("Interface %d\n", interface->bInterfaceNumber);
-	DEBUG_OUT("  Class %d\n", interface->bInterfaceClass);
-	DEBUG_OUT("  Sub Class %d\n", interface->bInterfaceSubClass);
-	DEBUG_OUT("  Interface Protocol %d\n", interface->bInterfaceProtocol);
+	YS_LOG("Interface %d\n", interface->bInterfaceNumber);
+	YS_LOG("  Class %d\n", interface->bInterfaceClass);
+	YS_LOG("  Sub Class %d\n", interface->bInterfaceSubClass);
+	YS_LOG("  Interface Protocol %d\n", interface->bInterfaceProtocol);
 }
 
 void readHIDInterface(PXUSB_ITF_DESCR interface, PXUSB_HID_DESCR descriptor)
 {
-	DEBUG_OUT("HID at Interface %d\n", interface->bInterfaceNumber);
-	DEBUG_OUT("  USB %d.%d%d\n", (descriptor->bcdHIDH & 15), (descriptor->bcdHIDL >> 4), (descriptor->bcdHIDL & 15));
-	DEBUG_OUT("  Country code 0x%02X\n", descriptor->bCountryCode);
-	DEBUG_OUT("  TypeX 0x%02X\n", descriptor->bDescriptorTypeX);
+	YS_LOG("HID at Interface %d\n", interface->bInterfaceNumber);
+	YS_LOG("  USB %d.%d%d\n", (descriptor->bcdHIDH & 15), (descriptor->bcdHIDL >> 4), (descriptor->bcdHIDL & 15));
+	YS_LOG("  Country code 0x%02X\n", descriptor->bCountryCode);
+	YS_LOG("  TypeX 0x%02X\n", descriptor->bDescriptorTypeX);
 }
 
 void readEndpoint()
@@ -788,24 +788,24 @@ unsigned char initializeRootHubConnection(unsigned char rootHubIndex)
 		if (i == 100)                                              
 		{
 			disableRootHubPort(rootHubIndex);
-			DEBUG_OUT("Failed to enable root hub port %i\n", rootHubIndex);
+			YS_LOG("Failed to enable root hub port %i\n", rootHubIndex);
 			continue;
 		}
 
 		selectHubPort(rootHubIndex, 0);
-		DEBUG_OUT("root hub port %i enabled\n", rootHubIndex);
+		YS_LOG("root hub port %i enabled\n", rootHubIndex);
 		s = getDeviceDescriptor();
                               
 		if ( s == ERR_SUCCESS )
 		{
 			dv_cls = ((PXUSB_DEV_DESCR)receiveDataBuffer)->bDeviceClass;
-			DEBUG_OUT( "Device class %i\n", dv_cls);
-			DEBUG_OUT( "Max packet size %i\n", ((PXUSB_DEV_DESCR)receiveDataBuffer)->bMaxPacketSize0);
+			YS_LOG( "Device class %i\n", dv_cls);
+			YS_LOG( "Max packet size %i\n", ((PXUSB_DEV_DESCR)receiveDataBuffer)->bMaxPacketSize0);
     		VendorProductID[rootHubIndex].idVendorL = ((PXUSB_DEV_DESCR)receiveDataBuffer)->idVendorL;
     		VendorProductID[rootHubIndex].idVendorH = ((PXUSB_DEV_DESCR)receiveDataBuffer)->idVendorH;
     		VendorProductID[rootHubIndex].idProductL = ((PXUSB_DEV_DESCR)receiveDataBuffer)->idProductL;
     		VendorProductID[rootHubIndex].idProductH = ((PXUSB_DEV_DESCR)receiveDataBuffer)->idProductH;
-			DEBUG_OUT_USB_BUFFER(receiveDataBuffer);
+			YS_LOG_USB_BUFFER(receiveDataBuffer);
 			addr = rootHubIndex + ((PUSB_SETUP_REQ)SetUSBAddressRequest)->wValueL; //todo wValue always 2.. does another id work?
 			s = setUsbAddress(addr);
 			if ( s == ERR_SUCCESS )
@@ -813,10 +813,10 @@ unsigned char initializeRootHubConnection(unsigned char rootHubIndex)
 				rootHubDevice[rootHubIndex].address = addr;
 				s = getDeviceString();
 				{
-					DEBUG_OUT_USB_BUFFER(receiveDataBuffer);
+					YS_LOG_USB_BUFFER(receiveDataBuffer);
 					if(convertStringDescriptor(receiveDataBuffer, receiveDataBuffer, RECEIVE_BUFFER_LEN,rootHubIndex))
 					{
-						DEBUG_OUT("Device String: %s\n", receiveDataBuffer);
+						YS_LOG("Device String: %s\n", receiveDataBuffer);
 					}
 					s = getConfigurationDescriptor();
 					if ( s == ERR_SUCCESS )
@@ -826,18 +826,18 @@ unsigned char initializeRootHubConnection(unsigned char rootHubIndex)
 						unsigned char __xdata temp[512];
 						PXUSB_ITF_DESCR currentInterface = 0;
 						int interfaces;
-						//DEBUG_OUT_USB_BUFFER(receiveDataBuffer);
+						//YS_LOG_USB_BUFFER(receiveDataBuffer);
 						for(i = 0; i < receiveDataBuffer[2] + (receiveDataBuffer[3] << 8); i++)
 						{
-							DEBUG_OUT("0x%02X ", (uint16_t)(receiveDataBuffer[i]));
+							YS_LOG("0x%02X ", (uint16_t)(receiveDataBuffer[i]));
 						}
-						DEBUG_OUT("\n");
+						YS_LOG("\n");
 
 						cfg = ((PXUSB_CFG_DESCR)receiveDataBuffer)->bConfigurationValue;
-						DEBUG_OUT("Configuration value: %d\n", cfg);
+						YS_LOG("Configuration value: %d\n", cfg);
 
 						interfaces = ((PXUSB_CFG_DESCR_LONG)receiveDataBuffer)->cfg_descr.bNumInterfaces;
-						DEBUG_OUT("Interface count: %d\n", interfaces);
+						YS_LOG("Interface count: %d\n", interfaces);
 
     					s = setUsbConfig( cfg ); 
 						//parse descriptors
@@ -851,14 +851,14 @@ unsigned char initializeRootHubConnection(unsigned char rootHubIndex)
 							switch(desc[1])
 							{
 								case USB_DESCR_TYP_INTERF:
-									DEBUG_OUT("Interface descriptor found\n", desc[1]);
-									//DEBUG_OUT_USB_BUFFER(desc);
+									YS_LOG("Interface descriptor found\n", desc[1]);
+									//YS_LOG_USB_BUFFER(desc);
 									currentInterface = ((PXUSB_ITF_DESCR)desc);
 									readInterface(rootHubIndex, currentInterface);
 									break;
 								case USB_DESCR_TYP_ENDP:
-									DEBUG_OUT("Endpoint descriptor found\n", desc[1]);
-									DEBUG_OUT_USB_BUFFER(desc);
+									YS_LOG("Endpoint descriptor found\n", desc[1]);
+									YS_LOG_USB_BUFFER(desc);
 									if(currentInterface->bInterfaceClass == USB_DEV_CLASS_HID)
 									{
 										PXUSB_ENDP_DESCR d = (PXUSB_ENDP_DESCR)desc;
@@ -868,37 +868,37 @@ unsigned char initializeRootHubConnection(unsigned char rootHubIndex)
 											{
 												if(HIDdevice[hiddevice].connected == 0)break;
 											}
-											DEBUG_OUT("Connected device at position: %i\n", hiddevice);
+											YS_LOG("Connected device at position: %i\n", hiddevice);
 											HIDdevice[hiddevice].endPoint = d->bEndpointAddress;
 											HIDdevice[hiddevice].connected = 1;										
 											HIDdevice[hiddevice].interface = currentInterface->bInterfaceNumber;
 											HIDdevice[hiddevice].rootHub = rootHubIndex;
-											DEBUG_OUT("Got endpoint for the HIDdevice 0x%02x\n", HIDdevice[hiddevice].endPoint);
+											YS_LOG("Got endpoint for the HIDdevice 0x%02x\n", HIDdevice[hiddevice].endPoint);
 											getHIDDeviceReport(hiddevice);
 										}
 									}
 									break;
 								case USB_DESCR_TYP_HID:
-									DEBUG_OUT("HID descriptor found\n", desc[1]);
-									//DEBUG_OUT_USB_BUFFER(desc);
+									YS_LOG("HID descriptor found\n", desc[1]);
+									//YS_LOG_USB_BUFFER(desc);
 									if(currentInterface == 0) break;
 									readHIDInterface(currentInterface, (PXUSB_HID_DESCR)desc);
 									break;
 								case USB_DESCR_TYP_CS_INTF:
-									DEBUG_OUT("Class specific header descriptor found\n", desc[1]);
-									DEBUG_OUT_USB_BUFFER(desc);
+									YS_LOG("Class specific header descriptor found\n", desc[1]);
+									YS_LOG_USB_BUFFER(desc);
 									//if(currentInterface == 0) break;
 									//readHIDInterface(currentInterface, (PXUSB_HID_DESCR)desc);
 									break;
 								case USB_DESCR_TYP_CS_ENDP:
-									DEBUG_OUT("Class specific endpoint descriptor found\n", desc[1]);
-									DEBUG_OUT_USB_BUFFER(desc);
+									YS_LOG("Class specific endpoint descriptor found\n", desc[1]);
+									YS_LOG_USB_BUFFER(desc);
 									//if(currentInterface == 0) break;
 									//readHIDInterface(currentInterface, (PXUSB_HID_DESCR)desc);
 									break;
 								default:
-									DEBUG_OUT("Unexpected descriptor type: %02X\n", desc[1]);
-									DEBUG_OUT_USB_BUFFER(desc);
+									YS_LOG("Unexpected descriptor type: %02X\n", desc[1]);
+									YS_LOG_USB_BUFFER(desc);
 							}
 							i += desc[0];
 						}
@@ -907,7 +907,7 @@ unsigned char initializeRootHubConnection(unsigned char rootHubIndex)
 				}
 			}
 		}
-		DEBUG_OUT( "Error = %02X\n", s);
+		YS_LOG( "Error = %02X\n", s);
 		sendProtocolMSG(MSG_TYPE_ERROR,0, rootHubIndex+1, s, 0xEE, 0);
 		rootHubDevice[rootHubIndex].status = ROOT_DEVICE_FAILED;
 		setUsbSpeed(1);	//TODO define speeds
@@ -928,7 +928,7 @@ unsigned char checkRootHubConnections()
 				{
 					disableRootHubPort(0);	//todo really need to reset register?
 					rootHubDevice[0].status = ROOT_DEVICE_CONNECTED;
-					DEBUG_OUT("Device at root hub %i connected\n", 0);
+					YS_LOG("Device at root hub %i connected\n", 0);
 					sendProtocolMSG(MSG_TYPE_CONNECTED,0, 0x01, 0x01, 0x01, 0);
 					s = initializeRootHubConnection(0);
 				}
@@ -938,7 +938,7 @@ unsigned char checkRootHubConnections()
 			{
     			resetHubDevices(0);
 				disableRootHubPort(0);
-				DEBUG_OUT("Device at root hub %i disconnected\n", 0);
+				YS_LOG("Device at root hub %i disconnected\n", 0);
 					sendProtocolMSG(MSG_TYPE_DISCONNECTED,0, 0x01, 0x01, 0x01, 0);
 				s = ERR_USB_DISCON;
 			}
@@ -949,7 +949,7 @@ unsigned char checkRootHubConnections()
 				{
 					disableRootHubPort(1);	//todo really need to reset register?
 					rootHubDevice[1].status = ROOT_DEVICE_CONNECTED;
-					DEBUG_OUT("Device at root hub %i connected\n", 1);
+					YS_LOG("Device at root hub %i connected\n", 1);
 					sendProtocolMSG(MSG_TYPE_CONNECTED,0, 0x02, 0x02, 0x02, 0);
 					s = initializeRootHubConnection(1);
 				}
@@ -959,7 +959,7 @@ unsigned char checkRootHubConnections()
 			{
     			resetHubDevices(1);
 				disableRootHubPort(1);
-				DEBUG_OUT("Device at root hub %i disconnected\n", 1);
+				YS_LOG("Device at root hub %i disconnected\n", 1);
 					sendProtocolMSG(MSG_TYPE_DISCONNECTED,0, 0x02, 0x02, 0x02, 0);
 				s = ERR_USB_DISCON;
 			}

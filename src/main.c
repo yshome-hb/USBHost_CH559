@@ -18,12 +18,13 @@ void main()
 {
     unsigned char s;
     initClock();
-    initUART0(115200, 1);
-    DEBUG_OUT("Startup\n");
+    debug_printf_init(115200);
+    //initUART1(115200, 1);
+    YS_LOG("Startup\n");
     resetHubDevices(0);
     resetHubDevices(1);
     initUSB_Host();
-    DEBUG_OUT("Ready\n");
+    YS_LOG("Ready\n");
 	sendProtocolMSG(MSG_TYPE_STARTUP,0, 0x00, 0x00, 0x00, 0);
     while(1)
     {
