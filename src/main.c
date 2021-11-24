@@ -2,7 +2,7 @@ typedef unsigned char *PUINT8;
 typedef unsigned char __xdata *PUINT8X;
 typedef const unsigned char __code *PUINT8C;
 typedef unsigned char __xdata UINT8X;
-typedef unsigned char  __data             UINT8D;
+typedef unsigned char __data UINT8D;
 
 #include <stdint.h>
 #include <stdio.h>
@@ -19,13 +19,12 @@ void main()
     unsigned char s;
     initClock();
     debug_printf_init(115200);
-    //initUART1(115200, 1);
+    initUART0(115200, 1);
     YS_LOG("Startup\n");
     resetHubDevices(0);
     resetHubDevices(1);
     initUSB_Host();
     YS_LOG("Ready\n");
-	sendProtocolMSG(MSG_TYPE_STARTUP,0, 0x00, 0x00, 0x00, 0);
     while(1)
     {
         if(!(P4_IN & (1 << 6)))

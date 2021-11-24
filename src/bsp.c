@@ -250,9 +250,9 @@ unsigned char UART0Receive()
 
 void UART0Send(unsigned char b)
 {
-	SBUF = b;
-	while(TI == 0);
-	TI = 1;
+    while(TI == 0);
+    TI = 0;
+    SBUF = b;
 }
 
 /**
