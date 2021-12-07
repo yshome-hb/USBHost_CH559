@@ -144,8 +144,8 @@ unsigned char enableRootHubPort(unsigned char rootHubIndex)
 void selectHubPort(unsigned char rootHubIndex, unsigned char HubPortIndex)
 {
 	unsigned char temp = HubPortIndex;
-        setHostUsbAddr(rootHubDevice[rootHubIndex].address); //todo ever != 0
-        setUsbSpeed(rootHubDevice[rootHubIndex].speed); //isn't that set before?
+    setHostUsbAddr(rootHubDevice[rootHubIndex].address); //todo ever != 0
+    setUsbSpeed(rootHubDevice[rootHubIndex].speed); //isn't that set before?
 }
 
 unsigned char hostTransfer(unsigned char endp_pid, unsigned char tog, unsigned short timeout )
@@ -523,13 +523,13 @@ void resetHubDevices(unsigned char hubindex)
     VendorProductID[hubindex].idProductH = 0;
 	for (hiddevice = 0; hiddevice < MAX_HID_DEVICES; hiddevice++)
 	{
-	if(HIDdevice[hiddevice].rootHub == hubindex){
-	HIDdevice[hiddevice].connected  = 0;
-	HIDdevice[hiddevice].rootHub  = 0;
-	HIDdevice[hiddevice].interface  = 0;
-	HIDdevice[hiddevice].endPoint  = 0;
-	HIDdevice[hiddevice].type  = 0;
-	}
+		if(HIDdevice[hiddevice].rootHub == hubindex){
+			HIDdevice[hiddevice].connected  = 0;
+			HIDdevice[hiddevice].rootHub  = 0;
+			HIDdevice[hiddevice].interface  = 0;
+			HIDdevice[hiddevice].endPoint  = 0;
+			HIDdevice[hiddevice].type  = 0;
+		}
 	}
 }
 
@@ -538,19 +538,20 @@ void pollHIDdevice()
 	 __xdata unsigned char s, hiddevice, len;
 	for (hiddevice = 0; hiddevice < MAX_HID_DEVICES; hiddevice++)
 	{
-		if(HIDdevice[hiddevice].connected){
-		selectHubPort(HIDdevice[hiddevice].rootHub, 0);
-		s = hostTransfer( USB_PID_IN << 4 | HIDdevice[hiddevice].endPoint & 0x7F, HIDdevice[hiddevice].endPoint & 0x80 ? bUH_R_TOG | bUH_T_TOG : 0, 0 );
-		if ( s == ERR_SUCCESS )
-   		{
-    		HIDdevice[hiddevice].endPoint ^= 0x80;
-			len = USB_RX_LEN;
-			if ( len )
-			{
-				YS_LOG("HID %lu, %i data %i : ", HIDdevice[hiddevice].type, hiddevice, HIDdevice[hiddevice].endPoint & 0x7F);
-				sendProtocolMSG(MSG_TYPE_DATA, len, RxBuffer);
+		if(HIDdevice[hiddevice].connected)
+		{
+			selectHubPort(HIDdevice[hiddevice].rootHub, 0);
+			s = hostTransfer( USB_PID_IN << 4 | HIDdevice[hiddevice].endPoint & 0x7F, HIDdevice[hiddevice].endPoint & 0x80 ? bUH_R_TOG | bUH_T_TOG : 0, 0 );
+			if ( s == ERR_SUCCESS )
+   			{
+    			HIDdevice[hiddevice].endPoint ^= 0x80;
+				len = USB_RX_LEN;
+				if ( len )
+				{
+					YS_LOG("HID %lu, %i data %i : ", HIDdevice[hiddevice].type, hiddevice, HIDdevice[hiddevice].endPoint & 0x7F);
+					sendProtocolMSG(MSG_TYPE_DATA, len, RxBuffer);
+				}
 			}
-		}
 		}
 	}
 }
@@ -770,7 +771,7 @@ unsigned char initializeRootHubConnection(unsigned char rootHubIndex)
 
 	for(retry = 0; retry < 10; retry++) //todo test fewer retries
 	{
-	delay( 100 );
+		delay(100);
 		delay(100); //todo test lower delay
 		resetHubDevices(rootHubIndex);
 		resetRootHubPort(rootHubIndex);                      
@@ -911,50 +912,47 @@ unsigned char initializeRootHubConnection(unsigned char rootHubIndex)
 
 unsigned char checkRootHubConnections()
 {
-	unsigned char s;
-	s = ERR_SUCCESS;
+	unsigned char s = ERR_SUCCESS;
 	if (UIF_DETECT)                                                        
 	{
 		UIF_DETECT = 0;    
-			if(USB_HUB_ST & bUHS_H0_ATTACH)
+		if(USB_HUB_ST & bUHS_H0_ATTACH)
+		{
+			if(rootHubDevice[0].status == ROOT_DEVICE_DISCONNECT || (UHUB0_CTRL & bUH_PORT_EN) == 0x00)
 			{
-				if(rootHubDevice[0].status == ROOT_DEVICE_DISCONNECT || (UHUB0_CTRL & bUH_PORT_EN) == 0x00)
-				{
-					disableRootHubPort(0);	//todo really need to reset register?
-					rootHubDevice[0].status = ROOT_DEVICE_CONNECTED;
-					YS_LOG("Device at root hub %i connected\n", 0);
-					s = initializeRootHubConnection(0);
-				}
+				disableRootHubPort(0);	//todo really need to reset register?
+				rootHubDevice[0].status = ROOT_DEVICE_CONNECTED;
+				YS_LOG("Device at root hub %i connected\n", 0);
+				s = initializeRootHubConnection(0);
 			}
-			else
-			if(rootHubDevice[0].status >= ROOT_DEVICE_CONNECTED)
+		}
+		else if(rootHubDevice[0].status >= ROOT_DEVICE_CONNECTED)
+		{
+    		resetHubDevices(0);
+			disableRootHubPort(0);
+			YS_LOG("Device at root hub %i disconnected\n", 0);
+			sendProtocolMSG(MSG_TYPE_DISCONNECTED, 0, 0);
+			s = ERR_USB_DISCON;
+		}
+
+		if(USB_HUB_ST & bUHS_H1_ATTACH)
+		{
+			if(rootHubDevice[1].status == ROOT_DEVICE_DISCONNECT || (UHUB1_CTRL & bUH_PORT_EN) == 0x00)
 			{
-    			resetHubDevices(0);
-				disableRootHubPort(0);
-				YS_LOG("Device at root hub %i disconnected\n", 0);
-				sendProtocolMSG(MSG_TYPE_DISCONNECTED, 0, 0);
-				s = ERR_USB_DISCON;
+				disableRootHubPort(1);	//todo really need to reset register?
+				rootHubDevice[1].status = ROOT_DEVICE_CONNECTED;
+				YS_LOG("Device at root hub %i connected\n", 1);
+				s = initializeRootHubConnection(1);
 			}
-			if(USB_HUB_ST & bUHS_H1_ATTACH)
-			{
-				
-				if(rootHubDevice[1].status == ROOT_DEVICE_DISCONNECT || (UHUB1_CTRL & bUH_PORT_EN) == 0x00)
-				{
-					disableRootHubPort(1);	//todo really need to reset register?
-					rootHubDevice[1].status = ROOT_DEVICE_CONNECTED;
-					YS_LOG("Device at root hub %i connected\n", 1);
-					s = initializeRootHubConnection(1);
-				}
-			}
-			else
-			if(rootHubDevice[1].status >= ROOT_DEVICE_CONNECTED)
-			{
-    			resetHubDevices(1);
-				disableRootHubPort(1);
-				YS_LOG("Device at root hub %i disconnected\n", 1);
-				sendProtocolMSG(MSG_TYPE_DISCONNECTED, 0, 0);
-				s = ERR_USB_DISCON;
-			}
+		}
+		else if(rootHubDevice[1].status >= ROOT_DEVICE_CONNECTED)
+		{
+    		resetHubDevices(1);
+			disableRootHubPort(1);
+			YS_LOG("Device at root hub %i disconnected\n", 1);
+			sendProtocolMSG(MSG_TYPE_DISCONNECTED, 0, 0);
+			s = ERR_USB_DISCON;
+		}
 	}
 	return s;
 }
