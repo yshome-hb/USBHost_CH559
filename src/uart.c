@@ -18,21 +18,27 @@ void processUart(){
     }
 }
 
-void sendProtocolMSG(unsigned char msgtype, unsigned short length, unsigned char __xdata *msgbuffer){
+void sendProtocolMSG(unsigned char msgcmd, unsigned short length, unsigned char __xdata *msgbuffer){
     unsigned short i;
-	UART0Send(msgtype);
+	unsigned char sum;
+	UART0Send(0xA5);
+	UART0Send(length+1);
+	UART0Send(msgcmd);
+	sum = msgcmd;
 	for (i = 0; i < length; i++)
 	{
 		UART0Send(msgbuffer[i]);
+		sum += msgbuffer[i];
 	}
+	UART0Send(sum);
 }
 
-void sendHidPollMSG(unsigned char msgtype, unsigned short length, unsigned char type, unsigned char device, unsigned char endpoint, unsigned char __xdata *msgbuffer,unsigned char idVendorL,unsigned char idVendorH,unsigned char idProductL,unsigned char idProductH){
+void sendHidPollMSG(unsigned char msgcmd, unsigned short length, unsigned char type, unsigned char device, unsigned char endpoint, unsigned char __xdata *msgbuffer,unsigned char idVendorL,unsigned char idVendorH,unsigned char idProductL,unsigned char idProductH){
     unsigned short i;
     UART0Send(0xFE);	
 	UART0Send(length);
 	UART0Send((unsigned char)(length>>8));
-	UART0Send(msgtype);
+	UART0Send(msgcmd);
 	UART0Send(type);
 	UART0Send(device);
 	UART0Send(endpoint);

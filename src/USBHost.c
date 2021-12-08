@@ -549,7 +549,7 @@ void pollHIDdevice()
 				if ( len )
 				{
 					YS_LOG("HID %lu, %i data %i : ", HIDdevice[hiddevice].type, hiddevice, HIDdevice[hiddevice].endPoint & 0x7F);
-					sendProtocolMSG(MSG_TYPE_DATA, len, RxBuffer);
+					sendProtocolMSG(CMD_REPORT, len, RxBuffer);
 				}
 			}
 		}
@@ -903,7 +903,7 @@ unsigned char initializeRootHubConnection(unsigned char rootHubIndex)
 			}
 		}
 		YS_LOG( "Error = %02X\n", s);
-		sendProtocolMSG(MSG_TYPE_ERROR, 1, &s);
+		//sendProtocolMSG(MSG_TYPE_ERROR, 1, &s);
 		rootHubDevice[rootHubIndex].status = ROOT_DEVICE_FAILED;
 		setUsbSpeed(1);	//TODO define speeds
 	}
@@ -931,7 +931,7 @@ unsigned char checkRootHubConnections()
     		resetHubDevices(0);
 			disableRootHubPort(0);
 			YS_LOG("Device at root hub %i disconnected\n", 0);
-			sendProtocolMSG(MSG_TYPE_DISCONNECTED, 0, 0);
+			sendProtocolMSG(CMD_REPORT, 0, 0);
 			s = ERR_USB_DISCON;
 		}
 
@@ -950,7 +950,7 @@ unsigned char checkRootHubConnections()
     		resetHubDevices(1);
 			disableRootHubPort(1);
 			YS_LOG("Device at root hub %i disconnected\n", 1);
-			sendProtocolMSG(MSG_TYPE_DISCONNECTED, 0, 0);
+			sendProtocolMSG(CMD_REPORT, 0, 0);
 			s = ERR_USB_DISCON;
 		}
 	}

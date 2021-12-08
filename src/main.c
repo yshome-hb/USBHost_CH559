@@ -19,7 +19,7 @@ void main()
     unsigned char s;
     initClock();
     debug_printf_init(115200);
-    initUART0(115200, 1);
+    initUART0(115200, 0);
     YS_LOG("Startup\n");
     resetHubDevices(0);
     resetHubDevices(1);
