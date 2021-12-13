@@ -85,13 +85,13 @@ void resetRootHubPort(unsigned char rootHubIndex)
 	 if (rootHubIndex == 0)    
     {
         UHUB0_CTRL = UHUB0_CTRL & ~ bUH_LOW_SPEED | bUH_BUS_RESET;
-        delay(15);
+        delayMs(15);
         UHUB0_CTRL = UHUB0_CTRL & ~ bUH_BUS_RESET;
     }
     else if (rootHubIndex == 1)
     {
         UHUB1_CTRL = UHUB1_CTRL & ~ bUH_LOW_SPEED | bUH_BUS_RESET;
-        delay(15);
+        delayMs(15);
         UHUB1_CTRL = UHUB1_CTRL & ~ bUH_BUS_RESET;
     }
 	delayUs(250);
@@ -371,7 +371,7 @@ unsigned char setUsbAddress(unsigned char addr)
     if (s != ERR_SUCCESS) return s;
     YS_LOG( "SetAddress: %i\n" , addr);
     setHostUsbAddr(addr);
-    delay(100);         
+    delayMs(100);         
     return ERR_SUCCESS;
 }
 
@@ -771,13 +771,13 @@ unsigned char initializeRootHubConnection(unsigned char rootHubIndex)
 
 	for(retry = 0; retry < 10; retry++) //todo test fewer retries
 	{
-		delay(100);
-		delay(100); //todo test lower delay
+		delayMs(100);
+		delayMs(100); //todo test lower delay
 		resetHubDevices(rootHubIndex);
 		resetRootHubPort(rootHubIndex);                      
 		for (i = 0; i < 100; i++) //todo test fewer retries
 		{
-			delay(1);
+			delayMs(1);
 			if (enableRootHubPort(rootHubIndex) == ERR_SUCCESS)  
 				break;
 		}

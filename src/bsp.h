@@ -1,5 +1,6 @@
 #ifndef __BSP_H__
 #define __BSP_H__
+
 #include <stdio.h>
 
 #define DEBUG
@@ -24,12 +25,14 @@ typedef enum
 }PIN_MODE_TypeDef;
 
 void initClock();
-void pinMode(unsigned char port, unsigned char pin, unsigned char mode);
 void delayUs(unsigned short n);
-void delay(unsigned short n);
+void delayMs(unsigned short n);
+void pinMode(unsigned char port, unsigned char pin, unsigned char mode);
+
 void initUART0(unsigned long baud, int alt);
 unsigned char UART0Receive();
 void UART0Send(unsigned char b);
+
 void initUART1(unsigned long baud, int alt);
 unsigned char UART1Receive();
 void UART1Send(unsigned char b);

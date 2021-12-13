@@ -14,6 +14,12 @@ typedef unsigned char __data UINT8D;
 
 SBIT(LED, 0x90, 6);
 
+/*******************************************************************************
+* Function Name  : main
+* Description    : Main program
+* Input          : None
+* Return         : None
+*******************************************************************************/
 void main()
 {
     unsigned char s;
@@ -33,4 +39,18 @@ void main()
         s = checkRootHubConnections();
         pollHIDdevice();
     }
+}
+
+/**
+ * stdio printf directed to UART0 using putchar and getchar
+ */
+int putchar(int c)
+{
+    UART1Send(c);
+	return c;
+}
+
+int getchar() 
+{
+    return UART1Receive();
 }
