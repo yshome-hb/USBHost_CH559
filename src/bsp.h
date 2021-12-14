@@ -28,6 +28,7 @@ void initClock();
 void delayUs(unsigned short n);
 void delayMs(unsigned short n);
 void pinMode(unsigned char port, unsigned char pin, unsigned char mode);
+void pin4Mode(unsigned char pin, unsigned char mode);
 
 void initUART0(unsigned long baud, int alt);
 unsigned char UART0Receive();

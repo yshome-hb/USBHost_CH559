@@ -1,7 +1,7 @@
 #include "CH559.h"
 #include "bsp.h"
 
-FunctionReference runBootloader = (FunctionReference)0xF400;
+FunctionReference runBootloader = (FunctionReference)BOOT_LOAD_ADDR;
 
 #ifndef FREQ_SYS
 #define	FREQ_SYS	48000000
@@ -176,6 +176,31 @@ void pinMode(unsigned char port, unsigned char pin, unsigned char mode)
 		PORT_CFG |= (bP0_OC << port);
 		*dir[port] |= 1 << pin;
 		*pu[port] |= 1 << pin;
+		break;
+	default:
+		break;
+	}
+}
+
+/**
+* #define PIN_MODE_INPUT 0
+* #define PIN_MODE_INPUT_PULLUP 1
+* #define PIN_MODE_OUTPUT 2
+ */
+void pin4Mode(unsigned char pin, unsigned char mode)
+{
+	switch (mode)
+	{
+	case PIN_MODE_INPUT: //Input only, no pull up
+		P4_DIR &= ~(1 << pin);
+		P4_PU &= ~(1 << pin);
+		break;
+	case PIN_MODE_INPUT_PULLUP: //Input only, pull up
+		P4_DIR &= ~(1 << pin);
+		P4_PU |= 1 << pin;
+		break;
+	case PIN_MODE_OUTPUT: //Push-pull output, high and low level strong drive
+		P4_DIR |= ~(1 << pin);
 		break;
 	default:
 		break;

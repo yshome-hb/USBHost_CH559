@@ -6,7 +6,7 @@
 #include "bsp.h"
 #include "uart.h"
 
-SBIT(LED, 0x90, 6);
+SBIT(WAKEUP, 0xB0, 3);
 
 uint8_t __xdata uartRxBuff;
 
@@ -14,13 +14,14 @@ void processUart(){
     while(RI){
         RI=0;
         uartRxBuff = SBUF;
-		LED = uartRxBuff & 0x01;
     }
 }
 
 void sendProtocolMSG(unsigned char msgcmd, unsigned short length, unsigned char __xdata *msgbuffer){
     unsigned short i;
 	unsigned char sum;
+	WAKEUP = 0;
+	delayMs(1);
 	UART0Send(0xA5);
 	UART0Send(length+1);
 	UART0Send(msgcmd);
@@ -31,6 +32,7 @@ void sendProtocolMSG(unsigned char msgcmd, unsigned short length, unsigned char 
 		sum += msgbuffer[i];
 	}
 	UART0Send(sum);
+	WAKEUP = 1;
 }
 
 void sendHidPollMSG(unsigned char msgcmd, unsigned short length, unsigned char type, unsigned char device, unsigned char endpoint, unsigned char __xdata *msgbuffer,unsigned char idVendorL,unsigned char idVendorH,unsigned char idProductL,unsigned char idProductH){

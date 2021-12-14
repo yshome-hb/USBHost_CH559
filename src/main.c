@@ -12,7 +12,8 @@ typedef unsigned char __data UINT8D;
 #include "USBHost.h"
 #include "uart.h"
 
-SBIT(LED, 0x90, 6);
+SBIT(POWER, 0xC0, 3);
+SBIT(WAKEUP, 0xB0, 3);
 
 /*******************************************************************************
 * Function Name  : main
@@ -31,6 +32,12 @@ void main()
     resetHubDevices(1);
     initUSB_Host();
     YS_LOG("Ready\n");
+
+    pinMode(3, 3, PIN_MODE_OUTPUT_OPEN_DRAIN);
+    pin4Mode(3, PIN_MODE_OUTPUT);
+    WAKEUP = 1;
+    POWER = 1;
+
     while(1)
     {
         if(!(P4_IN & (1 << 6)))
