@@ -13,7 +13,6 @@ typedef enum {
 }MSG_CMD_TypeDef;
 
 void processUart();
-void sendHidPollMSG(unsigned char msgcmd, unsigned short length, unsigned char type, unsigned char device, unsigned char endpoint, unsigned char __xdata *msgbuffer,unsigned char idVendorL,unsigned char idVendorH,unsigned char idProductL,unsigned char idProductH);
 void sendProtocolMSG(unsigned char msgcmd, unsigned short length, unsigned char __xdata *msgbuffer);
 
 #endif

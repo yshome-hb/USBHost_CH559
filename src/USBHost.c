@@ -497,13 +497,15 @@ unsigned char getInterfaceDescriptor(unsigned char index)
 #define REPORT_USAGE_PAGE_VENDOR	0xff00
 
 #define MAX_HID_DEVICES 8
+#define MAX_REPORT_USAGES	8
 struct 
 {
 	unsigned char connected;
 	unsigned char rootHub;
 	unsigned char interface;
 	unsigned char endPoint;
-	unsigned long type;
+	unsigned long type[MAX_REPORT_USAGES];
+	unsigned long id[MAX_REPORT_USAGES];
 }  __xdata HIDdevice[MAX_HID_DEVICES];
 
 struct 
@@ -528,14 +530,16 @@ void resetHubDevices(unsigned char hubindex)
 			HIDdevice[hiddevice].rootHub  = 0;
 			HIDdevice[hiddevice].interface  = 0;
 			HIDdevice[hiddevice].endPoint  = 0;
-			HIDdevice[hiddevice].type  = 0;
+			HIDdevice[hiddevice].type[0]  = 0;
+			HIDdevice[hiddevice].id[0]  = 0;
 		}
 	}
 }
 
 void pollHIDdevice()
 {
-	 __xdata unsigned char s, hiddevice, len;
+	__xdata unsigned char i, s, hiddevice, len;
+	__xdata unsigned char txData[16] = {0};
 	for (hiddevice = 0; hiddevice < MAX_HID_DEVICES; hiddevice++)
 	{
 		if(HIDdevice[hiddevice].connected)
@@ -548,8 +552,26 @@ void pollHIDdevice()
 				len = USB_RX_LEN;
 				if ( len )
 				{
-					YS_LOG("HID %lu, %i data %i : ", HIDdevice[hiddevice].type, hiddevice, HIDdevice[hiddevice].endPoint & 0x7F);
-					sendProtocolMSG(CMD_REPORT, len, RxBuffer);
+					for(i = 0; i < MAX_REPORT_USAGES; i++)
+					{
+						if(!HIDdevice[hiddevice].id[i] || (HIDdevice[hiddevice].id[i] == RxBuffer[0]))
+						{
+							break;
+						}
+					}
+
+					YS_LOG("HID[%i](%lu), %i data %i\n", hiddevice, HIDdevice[hiddevice].type[i], RxBuffer[0]);
+					if(HIDdevice[hiddevice].id[i])
+						memcpy(txData, RxBuffer, len);
+					else
+						memcpy(txData, RxBuffer+1, len-1);
+
+					if(HIDdevice[hiddevice].type[i] == REPORT_USAGE_KEYBOARD)
+						len = 8;
+					else if(HIDdevice[hiddevice].type[i] == REPORT_USAGE_MOUSE)
+						len = 5;
+
+					sendProtocolMSG(CMD_REPORT, len, txData);
 				}
 			}
 		}
@@ -561,7 +583,7 @@ void parseHIDDeviceReport(unsigned char __xdata *report, unsigned short length, 
 {
 	unsigned short i = 0;
 	unsigned char level = 0;
-	unsigned char isUsageSet = 0;
+	unsigned char usageId = 0;
 	while(i < length)
 	{
 		unsigned char j;
@@ -603,9 +625,8 @@ void parseHIDDeviceReport(unsigned char __xdata *report, unsigned short length, 
 			}
 			break;
 			case REPORT_USAGE:
-				if (!isUsageSet){
-					HIDdevice[CurrentDevive].type = data;
-					isUsageSet = 1;
+				if (!level && usageId < MAX_REPORT_USAGES){
+					HIDdevice[CurrentDevive].type[usageId++] = data;
 				}
 				YS_LOG("Usage ");
 				switch(data)
@@ -701,6 +722,7 @@ void parseHIDDeviceReport(unsigned char __xdata *report, unsigned short length, 
 			break;
 			case REPORT_REPORT_ID:
 				YS_LOG("Report ID %lu\n", data);
+				HIDdevice[CurrentDevive].id[usageId-1] = data;
 			break;
 			case REPORT_REPORT_COUNT:
 				YS_LOG("Report count %lu\n", data);
