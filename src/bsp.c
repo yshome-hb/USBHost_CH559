@@ -8,13 +8,13 @@ FunctionReference runBootloader = (FunctionReference)BOOT_LOAD_ADDR;
 #endif 
 
 /*******************************************************************************
-* Function Name  : initClock()
+* Function Name  : Clock_init()
 * Description    : Initialize system clock
 * Input          : None
 * Output         : None
 * Return         : None
 *******************************************************************************/ 
-void initClock()
+void Clock_init()
 {
     SAFE_MOD = 0x55;
     SAFE_MOD = 0xAA;
@@ -137,70 +137,67 @@ void delayMs(unsigned short n)
 * #define PIN_MODE_INPUT_OUTPUT_PULLUP 5
 * #define PIN_MODE_INPUT_OUTPUT_PULLUP_2CLK 6
  */
-void pinMode(unsigned char port, unsigned char pin, unsigned char mode)
+void Pin_mode(unsigned char port, unsigned char pin, unsigned char mode)
 {
 	volatile unsigned char *dir[] = {&P0_DIR, &P1_DIR, &P2_DIR, &P3_DIR};
 	volatile unsigned char *pu[] = {&P0_PU, &P1_PU, &P2_PU, &P3_PU};
-	switch (mode)
+
+	if(port == PORT4)
+	{
+		switch (mode)
+		{
+		case PIN_MODE_INPUT: //Input only, no pull up
+			P4_DIR &= ~pin;
+			P4_PU &= ~pin;
+			break;
+		case PIN_MODE_INPUT_PULLUP: //Input only, pull up
+			P4_DIR &= ~pin;
+			P4_PU |= pin;
+			break;
+		case PIN_MODE_OUTPUT: //Push-pull output, high and low level strong drive
+			P4_DIR |= pin;
+			break;
+		default:
+			break;
+		}
+		return;
+	}
+
+	switch(mode)
 	{
 	case PIN_MODE_INPUT: //Input only, no pull up
 		PORT_CFG &= ~(bP0_OC << port);
-		*dir[port] &= ~(1 << pin);
-		*pu[port] &= ~(1 << pin);
+		*dir[port] &= ~pin;
+		*pu[port] &= ~pin;
 		break;
 	case PIN_MODE_INPUT_PULLUP: //Input only, pull up
 		PORT_CFG &= ~(bP0_OC << port);
-		*dir[port] &= ~(1 << pin);
-		*pu[port] |= 1 << pin;
+		*dir[port] &= ~pin;
+		*pu[port] |= pin;
 		break;
 	case PIN_MODE_OUTPUT: //Push-pull output, high and low level strong drive
 		PORT_CFG &= ~(bP0_OC << port);
-		*dir[port] |= ~(1 << pin);
+		*dir[port] |= pin;
 		break;
-	case PIN_MODE_OUTPUT_OPEN_DRAIN: //Open drain output, no pull-up, support input
+	case PIN_MODE_OUTPUT_OPEN_DRAIN:  //Open drain output, no pull-up, support input
 		PORT_CFG |= (bP0_OC << port);
-		*dir[port] &= ~(1 << pin);
-		*pu[port] &= ~(1 << pin);
+		*dir[port] &= ~pin;
+		*pu[port] &= ~pin;
 		break;
 	case PIN_MODE_OUTPUT_OPEN_DRAIN_2CLK: //Open-drain output, no pull-up, only drives 2 clocks high when the transition output goes from low to high
 		PORT_CFG |= (bP0_OC << port);
-		*dir[port] |= 1 << pin;
-		*pu[port] &= ~(1 << pin);
+		*dir[port] |= pin;
+		*pu[port] &= ~pin;
 		break;
 	case PIN_MODE_INPUT_OUTPUT_PULLUP: //Weakly bidirectional (standard 51 mode), open drain output, with pull-up
 		PORT_CFG |= (bP0_OC << port);
-		*dir[port] &= ~(1 << pin);
-		*pu[port] |= 1 << pin;
+		*dir[port] &= pin;
+		*pu[port] |= ~pin;
 		break;
 	case PIN_MODE_INPUT_OUTPUT_PULLUP_2CLK: //Quasi-bidirectional (standard 51 mode), open-drain output, with pull-up, when the transition output is low to high, only drives 2 clocks high
 		PORT_CFG |= (bP0_OC << port);
-		*dir[port] |= 1 << pin;
-		*pu[port] |= 1 << pin;
-		break;
-	default:
-		break;
-	}
-}
-
-/**
-* #define PIN_MODE_INPUT 0
-* #define PIN_MODE_INPUT_PULLUP 1
-* #define PIN_MODE_OUTPUT 2
- */
-void pin4Mode(unsigned char pin, unsigned char mode)
-{
-	switch (mode)
-	{
-	case PIN_MODE_INPUT: //Input only, no pull up
-		P4_DIR &= ~(1 << pin);
-		P4_PU &= ~(1 << pin);
-		break;
-	case PIN_MODE_INPUT_PULLUP: //Input only, pull up
-		P4_DIR &= ~(1 << pin);
-		P4_PU |= 1 << pin;
-		break;
-	case PIN_MODE_OUTPUT: //Push-pull output, high and low level strong drive
-		P4_DIR |= ~(1 << pin);
+		*dir[port] |= pin;
+		*pu[port] |= ~pin;
 		break;
 	default:
 		break;
@@ -225,7 +222,7 @@ unsigned char digitalRead(unsigned char port, unsigned char pin)
  * pins: tx = P3.1 rx = P3.0
  * alt != 0 pins: tx = P0.2 rx = P0.3
  */
-void initUART0(unsigned long baud, int alt)
+void UART0_init(unsigned long baud, int alt)
 {
 	unsigned long x;
 	if(alt)
@@ -252,18 +249,18 @@ void initUART0(unsigned long baud, int alt)
 	TI = 1;
 }
 
-unsigned char UART0Receive()
+unsigned char UART0_receive()
 {
     while(RI == 0);
     RI = 0;
     return SBUF;
 }
 
-void UART0Send(unsigned char b)
+void UART0_send(unsigned char b)
 {
+    SBUF = b;
     while(TI == 0);
     TI = 0;
-    SBUF = b;
 }
 
 /**
@@ -271,7 +268,7 @@ void UART0Send(unsigned char b)
  * pins: tx = P4.4 rx = P4.0
  * alt != 0 pins: tx = P2.7 rx = P2.6
  */
-void initUART1(unsigned long baud, int alt)
+void UART1_init(unsigned long baud, int alt)
 {
     unsigned long x = FREQ_SYS / 16 / baud;
 
@@ -299,13 +296,13 @@ void initUART1(unsigned long baud, int alt)
     SER1_ADDR |= 0xFF;                              //关闭多机通信
 }
 
-unsigned char UART1Receive()
+unsigned char UART1_receive()
 {
     while((SER1_LSR & bLSR_DATA_RDY) == 0);
     return SER1_RBR;
 }
 
-void UART1Send(unsigned char b)
+void UART1_send(unsigned char b)
 {
 	SER1_THR = b;
     while((SER1_LSR & bLSR_T_FIFO_EMP) == 0);

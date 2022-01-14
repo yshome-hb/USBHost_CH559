@@ -24,17 +24,17 @@ SBIT(WAKEUP, 0xB0, 3);
 void main()
 {
     unsigned char s;
-    initClock();
-    debug_printf_init(115200);
-    initUART0(115200, 0);
+    Clock_init();
+    YS_DEBUG_INIT(115200);
+    UART0_init(115200, 0);
     YS_LOG("Startup\n");
     resetHubDevices(0);
     resetHubDevices(1);
     initUSB_Host();
     YS_LOG("Ready\n");
 
-    pinMode(3, 3, PIN_MODE_OUTPUT_OPEN_DRAIN);
-    pin4Mode(3, PIN_MODE_OUTPUT);
+    Pin_mode(PORT3, PIN3, PIN_MODE_OUTPUT_OPEN_DRAIN);
+    Pin_mode(PORT4, PIN3, PIN_MODE_OUTPUT);
     WAKEUP = 1;
     POWER = 1;
 
@@ -53,11 +53,11 @@ void main()
  */
 int putchar(int c)
 {
-    UART1Send(c);
+    UART1_send(c);
 	return c;
 }
 
 int getchar() 
 {
-    return UART1Receive();
+    return UART1_receive();
 }
