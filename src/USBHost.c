@@ -1,7 +1,7 @@
 #include "CH559.h"
 #include "USBHost.h"
 #include "bsp.h"
-#include "uart.h"
+#include "ys_protocol.h"
 #include <string.h>
 
 typedef const unsigned char __code *PUINT8C;
@@ -561,7 +561,7 @@ void pollHIDdevice()
 					}
 
 					YS_LOG("HID[%i](%lu), %i data %i\n", hiddevice, HIDdevice[hiddevice].type[i], RxBuffer[0]);
-					if(HIDdevice[hiddevice].id[i])
+					if(!HIDdevice[hiddevice].id[i])
 						memcpy(txData, RxBuffer, len);
 					else
 						memcpy(txData, RxBuffer+1, len-1);
@@ -571,7 +571,7 @@ void pollHIDdevice()
 					else if(HIDdevice[hiddevice].type[i] == REPORT_USAGE_MOUSE)
 						len = 5;
 
-					sendProtocolMSG(CMD_REPORT, len, txData);
+					Protocol_sendMsg(CMD_REPORT, txData, len);
 				}
 			}
 		}
@@ -953,7 +953,7 @@ unsigned char checkRootHubConnections()
     		resetHubDevices(0);
 			disableRootHubPort(0);
 			YS_LOG("Device at root hub %i disconnected\n", 0);
-			sendProtocolMSG(CMD_REPORT, 0, 0);
+			Protocol_sendMsg(CMD_REPORT, 0, 0);
 			s = ERR_USB_DISCON;
 		}
 
@@ -972,7 +972,7 @@ unsigned char checkRootHubConnections()
     		resetHubDevices(1);
 			disableRootHubPort(1);
 			YS_LOG("Device at root hub %i disconnected\n", 1);
-			sendProtocolMSG(CMD_REPORT, 0, 0);
+			Protocol_sendMsg(CMD_REPORT, 0, 0);
 			s = ERR_USB_DISCON;
 		}
 	}

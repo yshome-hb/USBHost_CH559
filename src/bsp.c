@@ -1,7 +1,9 @@
-#include "CH559.h"
+#include "config.h"
 #include "bsp.h"
 
 FunctionReference runBootloader = (FunctionReference)BOOT_LOAD_ADDR;
+
+__data unsigned short sysTick;
 
 #ifndef FREQ_SYS
 #define	FREQ_SYS	48000000
@@ -217,6 +219,54 @@ unsigned char digitalRead(unsigned char port, unsigned char pin)
 }
 */
 
+/*******************************************************************************
+* Function Name  : SW_reset()
+* Description    : system soft reset
+* Input          : None
+* Output         : None
+* Return         : None
+*******************************************************************************/
+void SW_reset()
+{
+    SAFE_MOD = 0x55;
+    SAFE_MOD = 0xAA;
+    GLOBAL_CFG |= bSW_RESET;
+}
+
+/*******************************************************************************
+* Function Name  : WDT_enable
+* Description    : Watchdog enable
+* Input          : en：
+*                   0：disable
+*                   1：enable
+* Return         : None
+*******************************************************************************/
+void WDT_enable(unsigned char en)
+{
+	SAFE_MOD = 0x55;
+	SAFE_MOD = 0xAA;
+	if(en)
+		GLOBAL_CFG |= bWDOG_EN;
+	else 
+		GLOBAL_CFG &= ~bWDOG_EN;
+	SAFE_MOD = 0xFF;
+	WDOG_COUNT = 0;
+}
+
+/*******************************************************************************
+* Function Name  : WDT_feed
+* Description    : Watchdog feed
+*                  看门狗复位时间(s) = (256-tim)/(Fsys/131072)
+*                  00H(Fsys=12MHz)=2.8s
+*                  80H(Fsys=12MHz)=1.4s
+* Input          : cnt：看门狗计数赋值
+* Return         : None
+*******************************************************************************/
+void WDT_feed(unsigned char cnt)
+{
+	WDOG_COUNT = cnt;
+}
+
 /**
  * Initialize UART0 port with given boud rate
  * pins: tx = P3.1 rx = P3.0
@@ -306,4 +356,138 @@ void UART1_send(unsigned char b)
 {
 	SER1_THR = b;
     while((SER1_LSR & bLSR_T_FIFO_EMP) == 0);
+}
+
+/*******************************************************************************
+* Function Name  : TMR0_init
+* Description    : Initialize timer0
+* Input          : mode：Timer模式选择
+*                   0-模式0，13位定时器，TLn的高3位无效
+*                   1-模式1，16位定时器
+*                   2-模式2，8位自动重装定时器
+*                   3-模式3，Timer0分成两个8位定时器，Timer1停止
+*                  div：时钟分频
+*                   0- Fsys
+*                   1- Fsys/4
+*                   2- Fsys/12
+* Return         : None
+*******************************************************************************/
+void TMR0_init(unsigned char mode, unsigned char div)
+{
+	TMOD = TMOD & 0xf0 | mode;
+	
+	if(div == TMR_DIV_1)
+	{
+		T2MOD |= bTMR_CLK | bT0_CLK;
+	}
+	else if(div == TMR_DIV_4)
+	{
+		T2MOD &= ~bTMR_CLK;
+		T2MOD |= bT0_CLK;
+	}
+	else if(div == TMR_DIV_12)
+	{
+		T2MOD &= ~(bTMR_CLK | bT0_CLK);
+	}
+}
+
+/*******************************************************************************
+* Function Name  : TMR0_setCount
+* Description    : Set timer0 counter value
+* Input          : cnt：计数器赋值
+* Return         : None
+*******************************************************************************/
+void TMR0_setCount(unsigned short cnt)
+{
+	unsigned short tmp = 65536 - cnt;
+	TL0 = tmp & 0xff;
+	TH0 = (tmp>>8) & 0xff;
+}
+
+/*******************************************************************************
+* Function Name  : TMR1_init
+* Description    : Initialize timer1
+* Input          : mode：Timer模式选择
+*                   0-模式0，13位定时器，TLn的高3位无效
+*                   1-模式1，16位定时器
+*                   2-模式2，8位自动重装定时器
+*                  div：时钟分频
+*                   0- Fsys
+*                   1- Fsys/4
+*                   2- Fsys/12
+* Return         : None
+*******************************************************************************/
+void TMR1_init(unsigned char mode, unsigned char div)
+{
+	TMOD = TMOD & 0x0f | (mode<<4);
+	
+	if(div == TMR_DIV_1)
+	{
+		T2MOD |= bTMR_CLK | bT1_CLK;
+	}
+	else if(div == TMR_DIV_4)
+	{
+		T2MOD &= ~bTMR_CLK;
+		T2MOD |= bT1_CLK;
+	}
+	else if(div == TMR_DIV_12)
+	{
+		T2MOD &= ~(bTMR_CLK | bT1_CLK);
+	}
+}
+
+/*******************************************************************************
+* Function Name  : TMR1_setCount
+* Description    : Set timer1 counter value
+* Input          : cnt：计数器赋值
+* Return         : None
+*******************************************************************************/
+void TMR1_setCount(unsigned short cnt)
+{
+	unsigned short tmp = 65536 - cnt;
+	TL1 = tmp & 0xff;
+	TH1 = (tmp>>8) & 0xff;
+}
+
+/*******************************************************************************
+* Function Name  : TMR2_init
+* Description    : Initialize timer2
+* Input          : div：时钟分频
+*                   0- Fsys
+*                   1- Fsys/4
+*                   2- Fsys/12
+* Return         : None
+*******************************************************************************/
+void TMR2_init(unsigned char div)
+{
+	RCLK = 0;
+	TCLK = 0;
+	CP_RL2 = 0;
+	
+	if(div == TMR_DIV_1)
+	{
+		T2MOD |= bTMR_CLK | bT2_CLK;
+	}
+	else if(div == TMR_DIV_4)
+	{
+		T2MOD &= ~bTMR_CLK;
+		T2MOD |= bT2_CLK;
+	}
+	else if(div == TMR_DIV_12)
+	{
+		T2MOD &= ~(bTMR_CLK | bT2_CLK);
+	}
+}
+
+/*******************************************************************************
+* Function Name  : TMR2_setCount
+* Description    : Set timer2 counter value
+* Input          : cnt：计数器赋值
+* Return         : None
+*******************************************************************************/
+void TMR2_setCount(unsigned short cnt)
+{
+	unsigned short tmp = 65536 - cnt;
+	RCAP2L = TL2 = tmp & 0xff;
+	RCAP2H = TH2 = (tmp>>8) & 0xff;
 }

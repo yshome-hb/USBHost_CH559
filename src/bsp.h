@@ -2,6 +2,7 @@
 #define __BSP_H__
 
 #include <stdio.h>
+#include "CH559.h"
 
 #define DEBUG
 
@@ -15,6 +16,15 @@
 
 #define IRQ_enable()   { EA = 1; }
 #define IRQ_disable()  { EA = 0; }
+
+extern __data unsigned short sysTick;
+#define clock_time()   (sysTick)
+#define SysClk_init() { \
+    TMR2_init(TMR_DIV_12); \
+    TMR2_setCount(4000); \
+    TMR2_enable(); \
+    TMR2_INTenable(); \
+}
 
 void Clock_init();
 void delayUs(unsigned short n);
@@ -54,6 +64,10 @@ typedef enum
 
 void Pin_mode(unsigned char port, unsigned char pin, unsigned char mode);
 
+void SW_reset(void);
+void WDT_enable(unsigned char en);
+void WDT_feed(unsigned char cnt); 
+
 void UART0_init(unsigned long baud, int alt);
 unsigned char UART0_receive();
 void UART0_send(unsigned char b);
@@ -61,6 +75,39 @@ void UART0_send(unsigned char b);
 void UART1_init(unsigned long baud, int alt);
 unsigned char UART1_receive();
 void UART1_send(unsigned char b);
+
+typedef enum
+{
+    TMR_MODE_13BIT = 0,
+    TMR_MODE_16BIT = 1,
+    TMR_MODE_AUTO8BIT = 2,
+}TMR_MODE_TypeDef;
+
+typedef enum
+{
+    TMR_DIV_1 = 0,
+    TMR_DIV_4 = 1,
+    TMR_DIV_12 = 2,
+}TMR_DIV_TypeDef;
+
+#define TMR0_enable()   { TR0 = 1; }
+#define TMR0_disable()  { TR0 = 0; }
+#define TMR0_INTenable()   { ET0 = 1; }
+#define TMR0_INTdisable()  { ET0 = 0; }
+#define TMR1_enable()   { TR1 = 1; }
+#define TMR1_disable()  { TR1 = 0; }
+#define TMR1_INTenable()   { ET1 = 1; }
+#define TMR1_INTdisable()  { ET1 = 0; }
+#define TMR2_enable()   { TR2 = 1; }
+#define TMR2_disable()  { TR2 = 0; }
+#define TMR2_INTenable()   { ET2 = 1; }
+#define TMR2_INTdisable()  { ET2 = 0; }
+void TMR0_init(unsigned char mode, unsigned char div);
+void TMR0_setCount(unsigned short cnt);
+void TMR1_init(unsigned char mode, unsigned char div);
+void TMR1_setCount(unsigned short cnt);
+void TMR2_init(unsigned char div);
+void TMR2_setCount(unsigned short cnt);
 
 typedef void(* __data FunctionReference)();
 extern FunctionReference runBootloader;
