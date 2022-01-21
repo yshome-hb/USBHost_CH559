@@ -528,7 +528,7 @@ struct
 	unsigned long type[MAX_REPORT_USAGES];
 	unsigned long id[MAX_REPORT_USAGES];
 	unsigned char ledId;
-}  __xdata HIDdevice[MAX_HID_DEVICES];
+} __xdata HIDdevice[MAX_HID_DEVICES];
 
 struct 
 {
@@ -536,11 +536,11 @@ struct
     unsigned long idVendorH;
     unsigned long idProductL;
     unsigned long idProductH;
-}  __xdata VendorProductID[2];
+} __xdata VendorProductID[2];
 
 void resetHubDevices(unsigned char hubindex)
 {
-	 __xdata unsigned char hiddevice;
+	__xdata unsigned char hiddevice;
     VendorProductID[hubindex].idVendorL = 0;
     VendorProductID[hubindex].idVendorH = 0;
     VendorProductID[hubindex].idProductL = 0;
@@ -548,12 +548,13 @@ void resetHubDevices(unsigned char hubindex)
 	for (hiddevice = 0; hiddevice < MAX_HID_DEVICES; hiddevice++)
 	{
 		if(HIDdevice[hiddevice].rootHub == hubindex){
-			HIDdevice[hiddevice].connected  = 0;
-			HIDdevice[hiddevice].rootHub  = 0;
-			HIDdevice[hiddevice].interface  = 0;
-			HIDdevice[hiddevice].endPoint  = 0;
-			HIDdevice[hiddevice].type[0]  = 0;
-			HIDdevice[hiddevice].id[0]  = 0;
+			HIDdevice[hiddevice].connected = 0;
+			HIDdevice[hiddevice].rootHub = 0;
+			HIDdevice[hiddevice].interface = 0;
+			HIDdevice[hiddevice].endPoint = 0;
+			HIDdevice[hiddevice].type[0] = 0;
+			HIDdevice[hiddevice].id[0] = 0;
+			HIDdevice[hiddevice].ledId = 0;
 		}
 	}
 }
@@ -562,6 +563,7 @@ void pollHIDdevice()
 {
 	__xdata unsigned char i, s, hiddevice, len;
 	__xdata unsigned char txData[16] = {0};
+	static unsigned short __xdata checkTick = 0;
 	for (hiddevice = 0; hiddevice < MAX_HID_DEVICES; hiddevice++)
 	{
 		if(HIDdevice[hiddevice].connected)
@@ -597,6 +599,14 @@ void pollHIDdevice()
 				}
 			}
 		}
+	}
+
+	if(TIMER_DIFF(checkTick) > 500)
+	{
+		checkTick = clock_time();
+		Protocol_sendMsg(CMD_STATUS, 0, 0);
+		if(Protocol_recvAck() == RESP_SUCC)
+			setKBReport(HIDdevice[0].ledId, PRTL_PAYLOAD);
 	}
 }
 

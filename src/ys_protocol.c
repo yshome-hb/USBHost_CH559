@@ -4,10 +4,8 @@
 
 SBIT(WAKEUP, 0xB0, 3);
 
-#define UART_BUFF_SIZE		32
-
 static uint16_t __data uartRxTick;
-static uint8_t __xdata uartRxBuff[UART_BUFF_SIZE];
+uint8_t __xdata uartRxBuff[UART_BUFF_SIZE];
 
 void Protocol_init()
 {

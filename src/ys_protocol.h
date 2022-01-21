@@ -15,9 +15,13 @@ enum PROTOCOL_CMD {
 };
 
 enum PROTOCOL_RESP {
-    RESP_ACK,
-    RESP_FAILED = 0xFF,
+    RESP_SUCC = 0xA5,
+    RESP_FAIL = 0xAA,
 };
+
+#define PRTL_PAYLOAD        uartRxBuff[1]
+#define UART_BUFF_SIZE	    32
+extern uint8_t __xdata uartRxBuff[UART_BUFF_SIZE];
 
 void Protocol_init();
 void Protocol_sendMsg(unsigned char cmd, unsigned char __xdata *msg, unsigned short len);
