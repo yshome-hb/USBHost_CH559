@@ -21,8 +21,7 @@ enum PROTOCOL_RESP {
 
 void Protocol_init();
 void Protocol_sendMsg(unsigned char cmd, unsigned char __xdata *msg, unsigned short len);
-
-void processUart();
+uint8_t Protocol_recvAck();
 
 
 #endif

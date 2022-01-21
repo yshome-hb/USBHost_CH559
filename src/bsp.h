@@ -19,6 +19,7 @@
 
 extern __data unsigned short sysTick;
 #define clock_time()   (sysTick)
+#define TIMER_DIFF(t)  ((unsigned short)((sysTick)-(t)))
 #define SysClk_init() { \
     TMR2_init(TMR_DIV_12); \
     TMR2_setCount(4000); \
@@ -68,10 +69,12 @@ void SW_reset(void);
 void WDT_enable(unsigned char en);
 void WDT_feed(unsigned char cnt); 
 
+#define UART0_INTenable()   { ES = 1; }
 void UART0_init(unsigned long baud, int alt);
 unsigned char UART0_receive();
 void UART0_send(unsigned char b);
 
+#define UART1_INTenable()   { ET1 = 1; }
 void UART1_init(unsigned long baud, int alt);
 unsigned char UART1_receive();
 void UART1_send(unsigned char b);

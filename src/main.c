@@ -36,7 +36,6 @@ void main()
     {
         if(!(P4_IN & (1 << 6)))
             runBootloader();
-        processUart();
         checkRootHubConnections();
         pollHIDdevice();
     }

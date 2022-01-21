@@ -4,22 +4,17 @@
 
 SBIT(WAKEUP, 0xB0, 3);
 
-uint8_t __xdata uartRxBuff;
+#define UART_BUFF_SIZE		32
 
+static uint16_t __data uartRxTick;
+static uint8_t __xdata uartRxBuff[UART_BUFF_SIZE];
 
 void Protocol_init()
 {
+	uartRxTick = 0;
 	UART0_init(115200, 0);
     Pin_mode(PORT3, PIN3, PIN_MODE_OUTPUT_OPEN_DRAIN);
     WAKEUP = 1;
-}
-
-
-void processUart(){
-    while(RI){
-        RI=0;
-        uartRxBuff = SBUF;
-    }
 }
 
 void Protocol_sendMsg(unsigned char cmd, unsigned char __xdata *msg, unsigned short len)
@@ -40,4 +35,26 @@ void Protocol_sendMsg(unsigned char cmd, unsigned char __xdata *msg, unsigned sh
 	}
 	UART0_send(sum);
 	WAKEUP = 1;
+}
+
+uint8_t Protocol_recvAck()
+{
+	uint8_t rxIndex = 0;
+
+	uartRxTick = clock_time();
+	while(TIMER_DIFF(uartRxTick) < 100)
+	{
+		if(RI)
+		{
+			RI = 0;
+			uartRxBuff[rxIndex++] = SBUF;
+			if((rxIndex == 3) && 
+			   (uartRxBuff[2] = (uartRxBuff[0] + uartRxBuff[1])))
+			{
+				return uartRxBuff[0];
+			}
+		}
+	}
+
+	return 0;
 }
