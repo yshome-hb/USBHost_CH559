@@ -13,6 +13,7 @@ __code unsigned char SetUSBAddressRequest[] = 				{USB_REQ_TYP_OUT, USB_SET_ADDR
 __code unsigned char GetDeviceStringRequest[] = 			{USB_REQ_TYP_IN, USB_GET_DESCRIPTOR, 2, 3, 9, 4, 2, 4};	//todo change language
 __code unsigned char SetupSetUsbConfig[] = { USB_REQ_TYP_OUT, USB_SET_CONFIGURATION, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
+__code unsigned char  SetHIDReportRequest[] = { USB_REQ_TYP_CLASS | USB_REQ_RECIP_INTERF, HID_SET_REPORT, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00 };
 __code unsigned char  SetHIDIdleRequest[] = {USB_REQ_TYP_CLASS | USB_REQ_RECIP_INTERF, HID_SET_IDLE, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 __code unsigned char  GetHIDReport[] = {USB_REQ_TYP_IN | USB_REQ_RECIP_INTERF, USB_GET_DESCRIPTOR, 0x00, USB_DESCR_TYP_REPORT, 0 /*interface*/, 0x00, 0xff, 0x00};
 
@@ -295,21 +296,21 @@ unsigned char hostCtrlTransfer(unsigned char __xdata *DataBuf, unsigned short *R
 		}
 		else
 		{
-			YS_LOG("Remaining bytes to write %i", RemLen);
+			YS_LOG("Remaining bytes to write %i\n", RemLen);
 			//todo rework this TxBuffer overwritten
 			while (RemLen)
 			{
 				delayUs(200);
 				UH_TX_LEN = RemLen >= endpoint0Size ? endpoint0Size : RemLen;
-				//memcpy(TxBuffer, pBuf, UH_TX_LEN);
-				pBuf += UH_TX_LEN;
-				if (pBuf[1] == 0x09)
-				{
-					SetPort = SetPort ^ 1 ? 1 : 0;
-					*pBuf = SetPort;
+				memcpy(TxBuffer, pBuf, UH_TX_LEN);
+				//pBuf += UH_TX_LEN;
+				// if (pBuf[1] == 0x09)
+				// {
+				// 	SetPort = SetPort ^ 1 ? 1 : 0;
+				// 	*pBuf = SetPort;
 
-					YS_LOG("SET_PORT  %02X  %02X ", *pBuf, SetPort);
-				}
+				// 	YS_LOG("SET_PORT  %02X  %02X \n", *pBuf, SetPort);
+				// }
 				YS_LOG("Sending %i bytes\n", (uint16_t)UH_TX_LEN);
 				s = hostTransfer(USB_PID_OUT << 4, UH_TX_CTRL, 10000);
 				if (s != ERR_SUCCESS)
@@ -381,6 +382,26 @@ unsigned char setUsbConfig( unsigned char cfg )
     fillTxBuffer(SetupSetUsbConfig, sizeof(SetupSetUsbConfig));
     pSetupReq->wValueL = cfg;                          
     return( hostCtrlTransfer(0, 0, 0) );            
+}
+
+unsigned char setKBReport( unsigned char reportId, unsigned char ledStatus )
+{
+	static unsigned char __xdata reportData[2];
+	PXUSB_SETUP_REQ pSetupReq = ((PXUSB_SETUP_REQ)TxBuffer);
+    fillTxBuffer(SetHIDReportRequest, sizeof(SetHIDReportRequest));
+	if(reportId)
+	{
+		pSetupReq->wValueL = reportId;
+		pSetupReq->wLengthL = 2;
+		reportData[0] = reportId;
+		reportData[1] = ledStatus;
+	}
+	else
+	{
+		pSetupReq->wLengthL = 1;
+		reportData[0] = ledStatus;
+	}
+	return( hostCtrlTransfer(reportData, 0, 0) );            
 }
 
 unsigned char getDeviceString()
@@ -506,6 +527,7 @@ struct
 	unsigned char endPoint;
 	unsigned long type[MAX_REPORT_USAGES];
 	unsigned long id[MAX_REPORT_USAGES];
+	unsigned char ledId;
 }  __xdata HIDdevice[MAX_HID_DEVICES];
 
 struct 
@@ -605,6 +627,8 @@ void parseHIDDeviceReport(unsigned char __xdata *report, unsigned short length, 
 				{
 					case REPORT_USAGE_PAGE_LEDS:
 						YS_LOG("LEDs");
+						if(HIDdevice[CurrentDevive].type[usageId-1] == REPORT_USAGE_KEYBOARD)
+							HIDdevice[CurrentDevive].ledId = HIDdevice[CurrentDevive].id[usageId-1];
 					break;
 					case REPORT_USAGE_PAGE_KEYBOARD:
 						YS_LOG("Keyboard/Keypad");

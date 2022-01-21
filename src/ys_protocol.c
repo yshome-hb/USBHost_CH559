@@ -13,7 +13,8 @@ void Protocol_init()
 {
 	uartRxTick = 0;
 	UART0_init(115200, 0);
-    Pin_mode(PORT3, PIN3, PIN_MODE_OUTPUT_OPEN_DRAIN);
+    //Pin_mode(PORT3, PIN3, PIN_MODE_OUTPUT_OPEN_DRAIN);
+	P3_DIR |= PIN3;
     WAKEUP = 1;
 }
 
