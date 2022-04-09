@@ -584,7 +584,7 @@ void pollHIDdevice()
 						}
 					}
 
-					YS_LOG("HID[%i](%lu), %i data %i\n", hiddevice, HIDdevice[hiddevice].type[i], RxBuffer[0]);
+					YS_LOG("HID[%i](%lu), data %i\n", hiddevice, HIDdevice[hiddevice].type[i], RxBuffer[0]);
 					if(!HIDdevice[hiddevice].id[i])
 						memcpy(txData, RxBuffer, len);
 					else

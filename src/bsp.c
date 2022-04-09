@@ -335,7 +335,11 @@ void UART1_init(unsigned long baud, int alt)
 	if(alt)
     	SER1_IER |= ((2 << 4) & MASK_U1_PIN_MOD);   //串口模式配置
     else
+	{
+		P4_DIR |= bTXD1_;
+		P4_PU |= bTXD1_ | bRXD1_;
 		SER1_IER |= ((1 << 4) & MASK_U1_PIN_MOD);   //串口模式配置	
+	}
 
     SER1_IER |= bIER_MODEM_CHG | bIER_LINE_STAT | bIER_THR_EMPTY | bIER_RECV_RDY;	//中断使能配置
  

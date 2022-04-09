@@ -7,7 +7,7 @@
 #define DEBUG
 
 #ifdef DEBUG
-#define YS_DEBUG_INIT(baud)    UART1_init(baud, 1)
+#define YS_DEBUG_INIT(baud)    UART1_init(baud, 0)
 #define YS_LOG(...) printf(__VA_ARGS__);
 #else
 #define YS_DEBUG_INIT(baud)
