@@ -2,7 +2,7 @@
 #include "bsp.h"
 #include "ys_protocol.h"
 
-SBIT(WAKEUP, 0xB0, 3);
+SBIT(WAKEUP, 0xB0, 2);
 
 static uint16_t __data uartRxTick;
 uint8_t __xdata uartRxBuff[UART_BUFF_SIZE];
@@ -11,8 +11,8 @@ void Protocol_init()
 {
 	uartRxTick = 0;
 	UART0_init(115200, 0);
-    //Pin_mode(PORT3, PIN3, PIN_MODE_OUTPUT_OPEN_DRAIN);
-	P3_DIR |= PIN3;
+    //Pin_mode(PORT3, PIN2, PIN_MODE_OUTPUT_OPEN_DRAIN);
+	P3_DIR |= PIN2;
     WAKEUP = 1;
 }
 
@@ -21,24 +21,26 @@ void Protocol_sendMsg(unsigned char cmd, unsigned char __xdata *msg, unsigned sh
     unsigned short i;
 	unsigned char sum;
 
+	RI = 0;
 	WAKEUP = 0;
 	delayMs(1);
 	UART0_send(PRTL_MAGIC_BYTE);
-	UART0_send(len+1);
 	UART0_send(cmd);
-	sum = cmd;
+	UART0_send(len);
+	sum = PRTL_MAGIC_BYTE ^ cmd ^ len;
 	for (i = 0; i < len; i++)
 	{
 		UART0_send(msg[i]);
-		sum += msg[i];
+		sum ^= msg[i];
 	}
 	UART0_send(sum);
 	WAKEUP = 1;
 }
 
-uint8_t Protocol_recvAck()
+uint8_t Protocol_recvAck(unsigned char cmd)
 {
 	uint8_t rxIndex = 0;
+	uint8_t checkSum = 0;
 
 	uartRxTick = clock_time();
 	while(TIMER_DIFF(uartRxTick) < 100)
@@ -46,14 +48,24 @@ uint8_t Protocol_recvAck()
 		if(RI)
 		{
 			RI = 0;
-			uartRxBuff[rxIndex++] = SBUF;
-			if((rxIndex == 3) && 
-			   (uartRxBuff[2] = (uartRxBuff[0] + uartRxBuff[1])))
+			uartRxBuff[rxIndex] = SBUF;
+			if(rxIndex == 0 && uartRxBuff[0] != PRTL_MAGIC_BYTE)
+				continue;
+
+			checkSum ^= uartRxBuff[rxIndex++];
+			if(rxIndex > 2 && rxIndex > (uartRxBuff[2] + 3))
 			{
-				return uartRxBuff[0];
+				if(checkSum == 0)
+				{
+					return uartRxBuff[1] ^ cmd;
+				}
+				else
+				{
+					return ERROR_CHECKSUM;
+				}
 			}
 		}
 	}
 
-	return 0;
+	return ERROR_TIMEOUT;
 }

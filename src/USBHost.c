@@ -595,7 +595,7 @@ void pollHIDdevice()
 					else if(HIDdevice[hiddevice].type[i] == REPORT_USAGE_MOUSE)
 						len = 5;
 
-					Protocol_sendMsg(CMD_REPORT, txData, len);
+					Protocol_sendMsg(CMD_HIDREPORT, txData, len);
 				}
 			}
 		}
@@ -604,8 +604,8 @@ void pollHIDdevice()
 	if(TIMER_DIFF(checkTick) > 500)
 	{
 		checkTick = clock_time();
-		Protocol_sendMsg(CMD_STATUS, 0, 0);
-		if(Protocol_recvAck() == RESP_SUCC)
+		Protocol_sendMsg(CMD_KBSTATUS, 0, 0);
+		if(Protocol_recvAck(CMD_KBSTATUS) == RESP_SUCC)
 			setKBReport(HIDdevice[0].ledId, PRTL_PAYLOAD);
 	}
 }
@@ -987,7 +987,7 @@ unsigned char checkRootHubConnections()
     		resetHubDevices(0);
 			disableRootHubPort(0);
 			YS_LOG("Device at root hub %i disconnected\n", 0);
-			Protocol_sendMsg(CMD_REPORT, 0, 0);
+			Protocol_sendMsg(CMD_HIDREPORT, 0, 0);
 			s = ERR_USB_DISCON;
 		}
 
@@ -1006,7 +1006,7 @@ unsigned char checkRootHubConnections()
     		resetHubDevices(1);
 			disableRootHubPort(1);
 			YS_LOG("Device at root hub %i disconnected\n", 1);
-			Protocol_sendMsg(CMD_REPORT, 0, 0);
+			Protocol_sendMsg(CMD_HIDREPORT, 0, 0);
 			s = ERR_USB_DISCON;
 		}
 	}
