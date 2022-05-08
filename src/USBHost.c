@@ -586,15 +586,20 @@ void pollHIDdevice()
 
 					YS_LOG("HID[%i](%lu), data %i\n", hiddevice, HIDdevice[hiddevice].type[i], RxBuffer[0]);
 					if(!HIDdevice[hiddevice].id[i])
-						memcpy(txData, RxBuffer, len);
+						memcpy(txData+1, RxBuffer, len);
 					else
-						memcpy(txData, RxBuffer+1, len-1);
+						memcpy(txData+1, RxBuffer+1, len-1);
 
 					if(HIDdevice[hiddevice].type[i] == REPORT_USAGE_KEYBOARD)
-						len = 8;
+					{
+						txData[0] = 1;
+						len = 9;
+					}
 					else if(HIDdevice[hiddevice].type[i] == REPORT_USAGE_MOUSE)
-						len = 5;
-
+					{
+						txData[0] = 2;
+						len = 6;
+					}
 					Protocol_sendMsg(CMD_HIDREPORT, txData, len);
 				}
 			}
