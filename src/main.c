@@ -5,7 +5,7 @@
 #include "USBHost.h"
 #include "ys_protocol.h"
 
-SBIT(POWER, 0xC0, 3);
+SBIT(SLEEP_PIN, 0xB0, 3);
 
 /*******************************************************************************
 * Function Name  : main
@@ -27,8 +27,7 @@ void main()
     Protocol_init();
     YS_LOG("Ready\n");
 
-    Pin_mode(PORT4, PIN3, PIN_MODE_OUTPUT);
-    POWER = 1;
+    //Pin_mode(PORT3, PIN3, PIN_MODE_INPUT_OUTPUT_PULLUP);
 
     IRQ_enable();
 
@@ -36,6 +35,10 @@ void main()
     {
         if(!(P4_IN & (1 << 6)))
             runBootloader();
+        
+        if(SLEEP_PIN)
+            Power_sleep(WAKE_SRC_P3_2E_3L);
+        
         checkRootHubConnections();
         pollHIDdevice();
     }

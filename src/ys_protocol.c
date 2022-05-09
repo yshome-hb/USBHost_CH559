@@ -2,7 +2,7 @@
 #include "bsp.h"
 #include "ys_protocol.h"
 
-SBIT(WAKEUP, 0xB0, 2);
+SBIT(WAKEUP_PIN, 0xB0, 2);
 
 static uint16_t __data uartRxTick;
 uint8_t __xdata uartRxBuff[UART_BUFF_SIZE];
@@ -11,9 +11,9 @@ void Protocol_init()
 {
 	uartRxTick = 0;
 	UART0_init(115200, 0);
-    //Pin_mode(PORT3, PIN2, PIN_MODE_OUTPUT_OPEN_DRAIN);
+    //Pin_mode(PORT3, PIN2, PIN_MODE_INPUT_OUTPUT_PULLUP_2CLK);
 	P3_DIR |= PIN2;
-    WAKEUP = 1;
+    WAKEUP_PIN = 1;
 }
 
 void Protocol_sendMsg(unsigned char cmd, unsigned char __xdata *msg, unsigned short len)
@@ -22,7 +22,7 @@ void Protocol_sendMsg(unsigned char cmd, unsigned char __xdata *msg, unsigned sh
 	unsigned char sum;
 
 	RI = 0;
-	WAKEUP = 0;
+	WAKEUP_PIN = 0;
 	delayMs(1);
 	UART0_send(PRTL_MAGIC_BYTE);
 	UART0_send(cmd);
@@ -34,7 +34,7 @@ void Protocol_sendMsg(unsigned char cmd, unsigned char __xdata *msg, unsigned sh
 		sum ^= msg[i];
 	}
 	UART0_send(sum);
-	WAKEUP = 1;
+	WAKEUP_PIN = 1;
 }
 
 uint8_t Protocol_recvAck(unsigned char cmd)

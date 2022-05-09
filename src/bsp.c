@@ -139,7 +139,7 @@ void delayMs(unsigned short n)
 * #define PIN_MODE_INPUT_OUTPUT_PULLUP 5
 * #define PIN_MODE_INPUT_OUTPUT_PULLUP_2CLK 6
  */
-void Pin_mode(unsigned char port, unsigned char pin, unsigned char mode)
+void Pin_mode(PIN_PORT_TypeDef port, PIN_NUM_TypeDef pin, PIN_MODE_TypeDef mode)
 {
 	volatile unsigned char *dir[] = {&P0_DIR, &P1_DIR, &P2_DIR, &P3_DIR};
 	volatile unsigned char *pu[] = {&P0_PU, &P1_PU, &P2_PU, &P3_PU};
@@ -193,13 +193,13 @@ void Pin_mode(unsigned char port, unsigned char pin, unsigned char mode)
 		break;
 	case PIN_MODE_INPUT_OUTPUT_PULLUP: //Weakly bidirectional (standard 51 mode), open drain output, with pull-up
 		PORT_CFG |= (bP0_OC << port);
-		*dir[port] &= pin;
-		*pu[port] |= ~pin;
+		*dir[port] &= ~pin;
+		*pu[port] |= pin;
 		break;
 	case PIN_MODE_INPUT_OUTPUT_PULLUP_2CLK: //Quasi-bidirectional (standard 51 mode), open-drain output, with pull-up, when the transition output is low to high, only drives 2 clocks high
 		PORT_CFG |= (bP0_OC << port);
 		*dir[port] |= pin;
-		*pu[port] |= ~pin;
+		*pu[port] |= pin;
 		break;
 	default:
 		break;
@@ -218,6 +218,22 @@ unsigned char digitalRead(unsigned char port, unsigned char pin)
 
 }
 */
+
+/*******************************************************************************
+* Function Name  : Power_sleep()
+* Description    : system power sleep
+* Input          : src--wakeup resource
+* Output         : None
+* Return         : None
+*******************************************************************************/
+void Power_sleep(WAKEUP_SRC_TypeDef src)
+{
+	SAFE_MOD = 0x55;
+	SAFE_MOD = 0xAA;
+	WAKE_CTRL = src;
+	SAFE_MOD = 0xFF;
+	PCON |= PD;
+}
 
 /*******************************************************************************
 * Function Name  : SW_reset()
@@ -376,7 +392,7 @@ void UART1_send(unsigned char b)
 *                   2- Fsys/12
 * Return         : None
 *******************************************************************************/
-void TMR0_init(unsigned char mode, unsigned char div)
+void TMR0_init(TMR_MODE_TypeDef mode, TMR_DIV_TypeDef div)
 {
 	TMOD = TMOD & 0xf0 | mode;
 	
@@ -421,7 +437,7 @@ void TMR0_setCount(unsigned short cnt)
 *                   2- Fsys/12
 * Return         : None
 *******************************************************************************/
-void TMR1_init(unsigned char mode, unsigned char div)
+void TMR1_init(TMR_MODE_TypeDef mode, TMR_DIV_TypeDef div)
 {
 	TMOD = TMOD & 0x0f | (mode<<4);
 	
@@ -462,7 +478,7 @@ void TMR1_setCount(unsigned short cnt)
 *                   2- Fsys/12
 * Return         : None
 *******************************************************************************/
-void TMR2_init(unsigned char div)
+void TMR2_init(TMR_DIV_TypeDef div)
 {
 	RCLK = 0;
 	TCLK = 0;

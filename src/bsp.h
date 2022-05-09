@@ -63,8 +63,21 @@ typedef enum
     PIN_MODE_INPUT_OUTPUT_PULLUP_2CLK = 6,
 }PIN_MODE_TypeDef;
 
-void Pin_mode(unsigned char port, unsigned char pin, unsigned char mode);
+void Pin_mode(PIN_PORT_TypeDef port, PIN_NUM_TypeDef pin, PIN_MODE_TypeDef mode);
 
+typedef enum
+{
+    WAKE_SRC_RXD0 = 0x01,
+    WAKE_SRC_P3_2E_3L = 0x02,
+    WAKE_SRC_CAP3 = 0x04,
+    WAKE_SRC_P0_3 = 0x08,
+    WAKE_SRC_P1_4 = 0x10,
+    WAKE_SRC_P1_5 = 0x20,
+    WAKE_SRC_RXD1 = 0x40,
+    WAKE_SRC_USB = 0x80,
+}WAKEUP_SRC_TypeDef;
+
+void Power_sleep(WAKEUP_SRC_TypeDef src);
 void SW_reset(void);
 void WDT_enable(unsigned char en);
 void WDT_feed(unsigned char cnt); 
@@ -105,11 +118,11 @@ typedef enum
 #define TMR2_disable()  { TR2 = 0; }
 #define TMR2_INTenable()   { ET2 = 1; }
 #define TMR2_INTdisable()  { ET2 = 0; }
-void TMR0_init(unsigned char mode, unsigned char div);
+void TMR0_init(TMR_MODE_TypeDef mode, TMR_DIV_TypeDef div);
 void TMR0_setCount(unsigned short cnt);
-void TMR1_init(unsigned char mode, unsigned char div);
+void TMR1_init(TMR_MODE_TypeDef mode, TMR_DIV_TypeDef div);
 void TMR1_setCount(unsigned short cnt);
-void TMR2_init(unsigned char div);
+void TMR2_init(TMR_DIV_TypeDef div);
 void TMR2_setCount(unsigned short cnt);
 
 typedef void(* __data FunctionReference)();
