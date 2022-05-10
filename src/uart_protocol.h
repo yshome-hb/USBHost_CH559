@@ -4,17 +4,27 @@
 #define PRTL_MAGIC_BYTE		0xA5
 
 enum PROTOCOL_CMD {
+/*---------- system command ----------*/
     CMD_REBOOT,
     CMD_SLEEP,
     CMD_SWITCH,
     CMD_RESTORE = 0x0F,
 
-    CMD_DEVINFO = 0x10,
-    CMD_BLENAME,
-    CMD_RFCONFIG,
+/*---------- get info ----------*/
+    CMD_GET_DEVINFO = 0x10,
+    CMD_GET_DEVMODE,
 
-    CMD_KBSTATUS = 0x20,
-    CMD_HIDREPORT,
+/*---------- set config ----------*/
+    CMD_SET_RFCONFIG,
+    CMD_SET_DEVNAME = 0x30,
+
+/*---------- hid status ----------*/
+    CMD_HIDSTATUS_KB = 0x60,
+
+/*---------- hid report ----------*/
+    CMD_HIDREPORT_MIN = 0x70,
+    CMD_HIDREPORT_MAX = 0x7F,
+
 };
 
 enum PROTOCOL_RESP {

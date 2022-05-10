@@ -78,12 +78,11 @@ void UartProtocol_writeHID(uint8_t report, uint8_t *buf, uint8_t len)
 	delayMs(1);
 	UART0_send(PRTL_MAGIC_BYTE);
 	sum = PRTL_MAGIC_BYTE;
-	UART0_send(CMD_HIDREPORT);
-	sum ^= CMD_HIDREPORT;
-	UART0_send(len+1);
-	sum ^= (len+1);
+	report |= CMD_HIDREPORT_MIN;
 	UART0_send(report);
 	sum ^= report;
+	UART0_send(len);
+	sum ^= (len);
 	for(i = 0; i < len; i++)
 	{
 		UART0_send(buf[i]);
@@ -95,6 +94,6 @@ void UartProtocol_writeHID(uint8_t report, uint8_t *buf, uint8_t len)
 
 uint8_t UartProtocol_readStatus()
 {
-	UartProtocol_sendMsg(CMD_KBSTATUS, NULL, 0);
-	return UartProtocol_waitAck(CMD_KBSTATUS);
+	UartProtocol_sendMsg(CMD_HIDSTATUS_KB, NULL, 0);
+	return UartProtocol_waitAck(CMD_HIDSTATUS_KB);
 }
