@@ -1,8 +1,8 @@
-#include "CH559.h"
-#include "USBHost.h"
-#include "bsp.h"
-#include "ys_protocol.h"
 #include <string.h>
+#include "CH559.h"
+#include "bsp.h"
+#include "uart_protocol.h"
+#include "USBHost.h"
 
 typedef const unsigned char __code *PUINT8C;
 
@@ -586,31 +586,27 @@ void pollHIDdevice()
 
 					YS_LOG("HID[%i](%lu), data %i\n", hiddevice, HIDdevice[hiddevice].type[i], RxBuffer[0]);
 					if(!HIDdevice[hiddevice].id[i])
-						memcpy(txData+1, RxBuffer, len);
+						memcpy(txData, RxBuffer, len);
 					else
-						memcpy(txData+1, RxBuffer+1, len-1);
+						memcpy(txData, RxBuffer+1, len-1);
 
 					if(HIDdevice[hiddevice].type[i] == REPORT_USAGE_KEYBOARD)
 					{
-						txData[0] = 1;
-						len = 9;
+						UartProtocol_writeHID(1, txData, 8);
 					}
 					else if(HIDdevice[hiddevice].type[i] == REPORT_USAGE_MOUSE)
 					{
-						txData[0] = 2;
-						len = 6;
+						UartProtocol_writeHID(2, txData, 5);
 					}
-					Protocol_sendMsg(CMD_HIDREPORT, txData, len);
 				}
 			}
 		}
 	}
 
-	if(TIMER_DIFF(checkTick) > 500)
+	if(TICK_DIFF(checkTick) > 500)
 	{
 		checkTick = clock_time();
-		Protocol_sendMsg(CMD_KBSTATUS, 0, 0);
-		if(Protocol_recvAck(CMD_KBSTATUS) == RESP_SUCC)
+		if(UartProtocol_readStatus() == RESP_SUCC)
 			setKBReport(HIDdevice[0].ledId, PRTL_PAYLOAD);
 	}
 }
@@ -992,7 +988,7 @@ unsigned char checkRootHubConnections()
     		resetHubDevices(0);
 			disableRootHubPort(0);
 			YS_LOG("Device at root hub %i disconnected\n", 0);
-			Protocol_sendMsg(CMD_HIDREPORT, 0, 0);
+			UartProtocol_writeHID(0xFF, NULL, 0);	
 			s = ERR_USB_DISCON;
 		}
 
@@ -1011,7 +1007,7 @@ unsigned char checkRootHubConnections()
     		resetHubDevices(1);
 			disableRootHubPort(1);
 			YS_LOG("Device at root hub %i disconnected\n", 1);
-			Protocol_sendMsg(CMD_HIDREPORT, 0, 0);
+			UartProtocol_writeHID(0xFF, NULL, 0);
 			s = ERR_USB_DISCON;
 		}
 	}

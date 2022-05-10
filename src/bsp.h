@@ -19,7 +19,7 @@
 
 extern __data unsigned short sysTick;
 #define clock_time()   (sysTick)
-#define TIMER_DIFF(t)  ((unsigned short)((sysTick)-(t)))
+#define TICK_DIFF(t)  ((unsigned short)((sysTick)-(t)))
 #define SysClk_init() { \
     TMR2_init(TMR_DIV_12); \
     TMR2_setCount(4000); \

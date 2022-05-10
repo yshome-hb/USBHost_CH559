@@ -15,9 +15,9 @@ mkdir %out_dir%
 SDCC\bin\sdcc -c -V -mmcs51 --model-large --xram-size %xram_size% --xram-loc %xram_loc% --code-size %code_size% -I/ -DFREQ_SYS=%dfreq_sys%  %src_dir%\main.c
 SDCC\bin\sdcc -c -V -mmcs51 --model-large --xram-size %xram_size% --xram-loc %xram_loc% --code-size %code_size% -I/ -DFREQ_SYS=%dfreq_sys%  %src_dir%\bsp.c
 SDCC\bin\sdcc -c -V -mmcs51 --model-large --xram-size %xram_size% --xram-loc %xram_loc% --code-size %code_size% -I/ -DFREQ_SYS=%dfreq_sys%  %src_dir%\USBHost.c
-SDCC\bin\sdcc -c -V -mmcs51 --model-large --xram-size %xram_size% --xram-loc %xram_loc% --code-size %code_size% -I/ -DFREQ_SYS=%dfreq_sys%  %src_dir%\ys_protocol.c
+SDCC\bin\sdcc -c -V -mmcs51 --model-large --xram-size %xram_size% --xram-loc %xram_loc% --code-size %code_size% -I/ -DFREQ_SYS=%dfreq_sys%  %src_dir%\uart_protocol.c
 
-SDCC\bin\sdcc main.rel bsp.rel USBHost.rel ys_protocol.rel -V -mmcs51 --model-large --xram-size %xram_size% --xram-loc %xram_loc% --code-size %code_size% -I/ -DFREQ_SYS=%dfreq_sys%  -o %out_dir%\%project_name%.ihx
+SDCC\bin\sdcc main.rel bsp.rel USBHost.rel uart_protocol.rel -V -mmcs51 --model-large --xram-size %xram_size% --xram-loc %xram_loc% --code-size %code_size% -I/ -DFREQ_SYS=%dfreq_sys%  -o %out_dir%\%project_name%.ihx
 
 SDCC\bin\packihx %out_dir%\%project_name%.ihx > %out_dir%\%project_name%.hex
 

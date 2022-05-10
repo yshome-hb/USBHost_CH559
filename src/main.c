@@ -3,7 +3,7 @@
 #include <string.h>
 #include "bsp.h"
 #include "USBHost.h"
-#include "ys_protocol.h"
+#include "uart_protocol.h"
 
 SBIT(SLEEP_PIN, 0xB0, 3);
 
@@ -24,7 +24,7 @@ void main()
     resetHubDevices(0);
     resetHubDevices(1);
     initUSB_Host();
-    Protocol_init();
+    UartProtocol_init();
     YS_LOG("Ready\n");
 
     //Pin_mode(PORT3, PIN3, PIN_MODE_INPUT_OUTPUT_PULLUP);

@@ -1,5 +1,5 @@
-#ifndef __YS_PROTOCOL_H__
-#define __YS_PROTOCOL_H__
+#ifndef __UART_PROTOCOL_H__
+#define __UART_PROTOCOL_H__
 
 #define PRTL_MAGIC_BYTE		0xA5
 
@@ -28,9 +28,9 @@ enum PROTOCOL_RESP {
 #define UART_BUFF_SIZE	    32
 extern uint8_t __xdata uartRxBuff[UART_BUFF_SIZE];
 
-void Protocol_init();
-void Protocol_sendMsg(unsigned char cmd, unsigned char __xdata *msg, unsigned short len);
-uint8_t Protocol_recvAck(unsigned char cmd);
+void UartProtocol_init();
+void UartProtocol_writeHID(uint8_t report, uint8_t *buf, uint8_t len);
+uint8_t UartProtocol_readStatus();
 
 
 #endif
