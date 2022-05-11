@@ -38,12 +38,12 @@ void disableRootHubPort(unsigned char index)
 	rootHubDevice[index].status = ROOT_DEVICE_DISCONNECT;
 	rootHubDevice[index].address = 0;
 	if (index)
-	UHUB1_CTRL = 0;
+		UHUB1_CTRL = 0;
 	else
-	UHUB0_CTRL = 0;
+		UHUB0_CTRL = 0;
 }
 
-void initUSB_Host()
+void initUsbHost()
 {
 	IE_USB = 0;
 	USB_CTRL = bUC_HOST_MODE;
@@ -424,16 +424,6 @@ char convertStringDescriptor(unsigned char __xdata *usbBuffer, unsigned char __x
 	return 1;
 }
 
-void YS_LOG_USB_BUFFER(unsigned char __xdata *usbBuffer)
-{
-	int i;
-	for(i = 0; i < usbBuffer[0]; i++)
-	{
-		YS_LOG("0x%02X ", (uint16_t)(usbBuffer[i]));
-	}
-	YS_LOG("\n");
-}
-
 unsigned char getConfigurationDescriptor()
 {
     unsigned char s;
@@ -469,6 +459,16 @@ unsigned char getInterfaceDescriptor(unsigned char index)
 	fillTxBuffer(GetInterfaceDescriptorRequest, sizeof(GetInterfaceDescriptorRequest));
     s = hostCtrlTransfer(receiveDataBuffer, &len, RECEIVE_BUFFER_LEN);             
 	return s;                          
+}
+
+void YS_LOG_USB_BUFFER(unsigned char __xdata *usbBuffer)
+{
+	int i;
+	for(i = 0; i < usbBuffer[0]; i++)
+	{
+		YS_LOG("0x%02X ", (uint16_t)(usbBuffer[i]));
+	}
+	YS_LOG("\n");
 }
 
 #define REPORT_USAGE_PAGE 		0x04
@@ -566,7 +566,7 @@ void pollHIDdevice()
 	static unsigned short __xdata checkTick = 0;
 	for (hiddevice = 0; hiddevice < MAX_HID_DEVICES; hiddevice++)
 	{
-		if(HIDdevice[hiddevice].connected)
+		if ( HIDdevice[hiddevice].connected )
 		{
 			selectHubPort(HIDdevice[hiddevice].rootHub, 0);
 			s = hostTransfer( USB_PID_IN << 4 | HIDdevice[hiddevice].endPoint & 0x7F, HIDdevice[hiddevice].endPoint & 0x80 ? bUH_R_TOG | bUH_T_TOG : 0, 0 );
@@ -988,7 +988,7 @@ unsigned char checkRootHubConnections()
     		resetHubDevices(0);
 			disableRootHubPort(0);
 			YS_LOG("Device at root hub %i disconnected\n", 0);
-			UartProtocol_writeHID(0xFF, NULL, 0);	
+			UartProtocol_writeHID(0x7F, NULL, 0);	
 			s = ERR_USB_DISCON;
 		}
 
@@ -1007,7 +1007,7 @@ unsigned char checkRootHubConnections()
     		resetHubDevices(1);
 			disableRootHubPort(1);
 			YS_LOG("Device at root hub %i disconnected\n", 1);
-			UartProtocol_writeHID(0xFF, NULL, 0);
+			UartProtocol_writeHID(0x7F, NULL, 0);
 			s = ERR_USB_DISCON;
 		}
 	}

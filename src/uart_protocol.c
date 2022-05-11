@@ -82,7 +82,7 @@ void UartProtocol_writeHID(uint8_t report, uint8_t *buf, uint8_t len)
 	UART0_send(report);
 	sum ^= report;
 	UART0_send(len);
-	sum ^= (len);
+	sum ^= len;
 	for(i = 0; i < len; i++)
 	{
 		UART0_send(buf[i]);

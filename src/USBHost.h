@@ -100,8 +100,7 @@ typedef struct _UsbDevice
 	unsigned char   HubPortNum;
 } UsbDevice, *PUsbDevice;
 
-void resetRootHub(unsigned char i);
-void initUSB_Host();
+void initUsbHost();
 unsigned char checkRootHubConnections();
 
 void resetHubDevices(unsigned char hubindex);

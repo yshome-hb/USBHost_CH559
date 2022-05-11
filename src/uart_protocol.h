@@ -12,11 +12,13 @@ enum PROTOCOL_CMD {
 
 /*---------- get info ----------*/
     CMD_GET_DEVINFO = 0x10,
+    CMD_GET_DEVMAC,
     CMD_GET_DEVMODE,
+    CMD_GET_RFSTATUS,
 
 /*---------- set config ----------*/
-    CMD_SET_RFCONFIG,
     CMD_SET_DEVNAME = 0x30,
+    CMD_SET_RFCONFIG,
 
 /*---------- hid status ----------*/
     CMD_HIDSTATUS_KB = 0x60,

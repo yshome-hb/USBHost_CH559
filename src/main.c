@@ -23,7 +23,8 @@ void main()
 
     resetHubDevices(0);
     resetHubDevices(1);
-    initUSB_Host();
+    initUsbHost();
+    
     UartProtocol_init();
     YS_LOG("Ready\n");
 
